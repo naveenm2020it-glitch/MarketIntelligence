@@ -30,3 +30,11 @@ No desktop installation is required for normal operation; use GitHub Actions fro
 
 ## Verification trigger
 A repository update is configured to start the NSE Daily Downloader workflow on the main branch.
+
+
+## Reliability controls added
+
+- Transient NSE GET failures (HTTP 429/5xx and connection/read failures) are retried up to five times with exponential backoff and Retry-After support.
+- data/history/manifest.json is committed by the workflow and records each report's trading date, source key, byte size, SHA-256 checksum, first/last seen timestamps and observation count.
+- A repeated report is identified by report category + trading date + SHA-256, so duplicate detection survives GitHub's temporary runner filesystem.
+- Raw report files and extracted CSVs remain in the dated Actions artifact (30-day retention); the committed manifest is durable metadata, not a permanent raw-data archive.
