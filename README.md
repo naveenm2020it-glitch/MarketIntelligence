@@ -81,3 +81,8 @@ Uses the NSE Equity UDiFF Bhavcopy and Security-wise Delivery report to join sym
 ## Agent 4: Futures Buildup Intelligence
 
 Uses only FUTIDX and FUTSTK contracts from the normalized NSE F&O UDiFF Bhavcopy. It classifies each valid contract from the reported close-versus-previous-close price change and change in open interest: long buildup, short buildup, short covering, or long unwinding. Zero/missing inputs are labelled neutral or unavailable rather than forced into a directional class. Options and other instrument types are excluded. The output includes contract-level expiry detail and an underlying-level summary across included expiries. This is EOD descriptive analysis only, not an intraday signal or standalone trade recommendation; no prediction accuracy is claimed.
+
+
+## Agent 5: NIFTY Option OI Support, Resistance and Max Pain
+
+Uses only the NIFTY option contracts in the normalized NSE F&O UDiFF report. Contracts are grouped separately by expiry and strike. Put OI (then change in Put OI) ranks potential support zones; Call OI (then change in Call OI) ranks potential resistance zones. Max Pain is calculated independently for each expiry by minimizing aggregate intrinsic-value payout across observed strikes. Non-NIFTY options and futures are excluded. This is EOD descriptive analysis, not live option-chain data, a guaranteed support/resistance level, or a price forecast.
