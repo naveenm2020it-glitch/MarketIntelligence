@@ -6,6 +6,7 @@ on:
       - 'agents/**'
       - 'tests/**'
       - '.github/workflows/agent_tests.yml'
+      - '.github/workflows/nse_historical_backfill.yml'
   pull_request:
     paths:
       - 'agents/**'
