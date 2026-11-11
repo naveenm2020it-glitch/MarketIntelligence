@@ -128,7 +128,7 @@ def analyze(files: list[dict], previous_files: list[dict] | None = None) -> dict
         "source_instrument_mapping": {"IDF": "FUTIDX", "STF": "FUTSTK", "FUTIDX": "FUTIDX", "FUTSTK": "FUTSTK"},
     }
 
-def run(input_path: Path, output_path: Path) -> dict:
+def run(input_path: Path, output_path: Path, previous_input_path: Path | None = None) -> dict:
     payload = json.loads(input_path.read_text(encoding="utf-8"))
     if payload.get("status") != "passed" or payload.get("date_consistency") != "passed":
         raise ValueError("Normalization status/date consistency must both be passed")
@@ -157,7 +157,8 @@ def run(input_path: Path, output_path: Path) -> dict:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", required=True)
-    parser.add_argument("--output")\n    parser.add_argument("--previous-input", help="Normalized prior NSE trading-session F&O report for legacy rows without previous close")
+    parser.add_argument("--output")
+    parser.add_argument("--previous-input", help="Normalized prior NSE trading-session F&O report for legacy rows without previous close")\n    parser.add_argument("--previous-input", help="Normalized prior NSE trading-session F&O report for legacy rows without previous close")
     args = parser.parse_args()
     source = Path(args.input)
     output = Path(args.output or f"data/analysis/{source.parent.name}/futures_buildup_intelligence.json")
