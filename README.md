@@ -76,3 +76,8 @@ Consumes only the normalized NSE Participant-wise Open Interest report. It repor
 ## Agent 3: Equity Delivery Strength Intelligence
 
 Uses the NSE Equity UDiFF Bhavcopy and Security-wise Delivery report to join symbols, rank delivery percentage and quantity, compare each stock with the current universe median, and calculate price change when source fields are available. Daily EOD snapshots support next-session comparisons. High delivery percentage alone does not prove accumulation or institutional buying.
+
+
+## Agent 4: Futures Buildup Intelligence
+
+Uses only FUTIDX and FUTSTK contracts from the normalized NSE F&O UDiFF Bhavcopy. It classifies each valid contract from the reported close-versus-previous-close price change and change in open interest: long buildup, short buildup, short covering, or long unwinding. Zero/missing inputs are labelled neutral or unavailable rather than forced into a directional class. Options and other instrument types are excluded. The output includes contract-level expiry detail and an underlying-level summary across included expiries. This is EOD descriptive analysis only, not an intraday signal or standalone trade recommendation; no prediction accuracy is claimed.
