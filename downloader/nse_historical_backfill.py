@@ -95,6 +95,34 @@ def fetch_one(session: requests.Session, day: date, key: str, url: str) -> dict:
             'validation': 'passed', 'csv_files': len(validations),
             'rows': sum(x['data_rows'] for x in validations)}
 
+def fetch_previous_fo_payload(day: date, session: requests.Session) -> dict:
+    """Fetch the nearest available earlier NSE F&O session; never substitute a settlement field."""
+    last_error = None
+    for offset in range(1, 11):
+        candidate = day - timedelta(days=offset)
+        try:
+            item = fetch_one(session, candidate, 'fo_udiff', urls(candidate)['fo_udiff'])
+            files = [read_report(p, 'fo_udiff') for p in sorted((EXTRACTED / candidate.isoformat() / 'fo_udiff').glob('*.csv'))]
+            if files:
+                return {'requested_date': candidate.isoformat(), 'reports': {'fo_udiff': files},
+                        'source': 'NSE prior-session F&O Bhavcopy', 'download': item}
+        except Exception as exc:
+            last_error = exc
+    raise RuntimeError(f'Could not retrieve a prior NSE F&O session within 10 calendar days: {last_error}')
+
+def needs_prior_session_close(normalized_path: Path) -> bool:
+    payload = json.loads(normalized_path.read_text(encoding='utf-8'))
+    files = payload.get('reports', {}).get('fo_udiff', [])
+    for file in files:
+        for raw in file.get('records', []):
+            row = {str(k).upper().replace('_', '').replace('-', '').replace(' ', ''): v for k, v in raw.items()}
+            instrument = str(row.get('FININSTRMTP') or row.get('INSTRUMENT') or '').strip().upper()
+            if instrument in ('FUTIDX', 'FUTSTK', 'IDF', 'STF'):
+                previous = row.get('PRVSCLSGPRIC') or row.get('PREVCLOSE') or row.get('PREVIOUSCLOSE')
+                if previous is None or str(previous).strip() in ('', '-', '--'):
+                    return True
+    return False
+
 def run_agent(command: list[str]) -> None:
     subprocess.run(command, check=True)
 
@@ -108,7 +136,14 @@ def process_day(day: date, session: requests.Session) -> dict:
         normalize_day(EXTRACTED, normalized, daystr)
         run_agent([sys.executable, 'agents/participant_oi_intelligence.py', '--input', str(normalized), '--history-root', 'data/analysis'])
         run_agent([sys.executable, 'agents/equity_delivery_strength.py', '--input', str(normalized), '--history-root', 'data/analysis'])
-        run_agent([sys.executable, 'agents/futures_buildup_intelligence.py', '--input', str(normalized)])
+        futures_command = [sys.executable, 'agents/futures_buildup_intelligence.py', '--input', str(normalized)]
+        if needs_prior_session_close(normalized):
+            prior_payload = fetch_previous_fo_payload(day, session)
+            prior_input = Path('data/normalized') / daystr / 'previous_session_fo.json'
+            prior_input.parent.mkdir(parents=True, exist_ok=True)
+            prior_input.write_text(json.dumps(prior_payload, indent=2, ensure_ascii=False) + '\\n', encoding='utf-8')
+            futures_command.extend(['--previous-input', str(prior_input)])
+        run_agent(futures_command)
         run_agent([sys.executable, 'agents/nifty_option_oi_intelligence.py', '--input', str(normalized)])
         run_agent([sys.executable, 'agents/eod_market_confluence_intelligence.py', '--date', daystr, '--analysis-root', 'data/analysis'])
         result['status'] = 'passed'
