@@ -141,7 +141,7 @@ def process_day(day: date, session: requests.Session) -> dict:
             prior_payload = fetch_previous_fo_payload(day, session)
             prior_input = Path('data/normalized') / daystr / 'previous_session_fo.json'
             prior_input.parent.mkdir(parents=True, exist_ok=True)
-            prior_input.write_text(json.dumps(prior_payload, indent=2, ensure_ascii=False) + '\\n', encoding='utf-8')
+            prior_input.write_text(json.dumps(prior_payload, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
             futures_command.extend(['--previous-input', str(prior_input)])
         run_agent(futures_command)
         run_agent([sys.executable, 'agents/nifty_option_oi_intelligence.py', '--input', str(normalized)])
