@@ -1,6 +1,9 @@
 name: NSE Daily Downloader
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
   schedule:
     # 17:00 Asia/Kolkata, Monday-Friday (UTC is 11:30)
