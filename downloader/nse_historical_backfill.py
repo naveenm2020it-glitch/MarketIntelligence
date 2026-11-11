@@ -24,12 +24,24 @@ REPORTS = ('equity_udiff', 'fo_udiff', 'participant_oi', 'security_delivery')
 HEADERS = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/128 Safari/537.36', 'Accept': '*/*', 'Referer': 'https://www.nseindia.com/all-reports'}
 
 def urls(day: date) -> dict[str, str]:
-    ymd, ddmmyyyy = day.strftime('%Y%m%d'), day.strftime('%d%m%Y')
+    # NSE replaced legacy CM/FO bhavcopies with UDiFF from 08-Jul-2024.
+    # 05-Jul-2024 is the last legacy trading session; 08-Jul-2024 is UDiFF.
+    udiff_start = date(2024, 7, 8)
+    ymd = day.strftime("%Y%m%d")
+    ddmonyyyy = day.strftime("%d%b%Y").upper()
+    ddmmyyyy = day.strftime("%d%m%Y")
+    if day >= udiff_start:
+        equity = f"{BASE}/content/cm/BhavCopy_NSE_CM_0_0_0_{ymd}_F_0000.csv.zip"
+        fo = f"{BASE}/content/fo/BhavCopy_NSE_FO_0_0_0_{ymd}_F_0000.csv.zip"
+    else:
+        month = day.strftime("%b").upper()
+        equity = f"https://archives.nseindia.com/content/historical/EQUITIES/{day.year}/{month}/cm{ddmonyyyy}bhav.csv.zip"
+        fo = f"https://archives.nseindia.com/content/historical/DERIVATIVES/{day.year}/{month}/fo{ddmonyyyy}bhav.csv.zip"
     return {
-        'equity_udiff': f'{BASE}/content/cm/BhavCopy_NSE_CM_0_0_0_{ymd}_F_0000.csv.zip',
-        'fo_udiff': f'{BASE}/content/fo/BhavCopy_NSE_FO_0_0_0_{ymd}_F_0000.csv.zip',
-        'participant_oi': f'{BASE}/content/nsccl/fao_participant_oi_{ddmmyyyy}.csv',
-        'security_delivery': f'{BASE}/products/content/sec_bhavdata_full_{ddmmyyyy}.csv',
+        "equity_udiff": equity,
+        "fo_udiff": fo,
+        "participant_oi": f"{BASE}/content/nsccl/fao_participant_oi_{ddmmyyyy}.csv",
+        "security_delivery": f"{BASE}/products/content/sec_bhavdata_full_{ddmmyyyy}.csv",
     }
 
 def make_session() -> requests.Session:

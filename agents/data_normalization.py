@@ -17,8 +17,25 @@ ALIASES = {
     "TOTAL SHORT CONTRACTS": "TOTALSHORTCONTRACTS", "TOTAL_SHORT_CONTRACTS": "TOTALSHORTCONTRACTS",
     "DELIV QTY": "DELIVQTY", "DELIV PER": "DELIVPER",
 }
-def norm_col(value: str) -> str:
+def norm_col(value: str, report: str | None = None) -> str:
     raw = value.strip().upper()
+    # Legacy NSE CM/FO bhavcopies used TIMESTAMP/SYMBOL/CLOSE-style headers.
+    # Keep SYMBOL unchanged for the separate security-delivery report.
+    legacy = {
+        "TIMESTAMP": "TRADDT",
+        "SYMBOL": "TCKRSYMB",
+        "CLOSE": "CLSPRIC",
+        "PREVCLOSE": "PRVSCLSGPRIC",
+        "PREV CLOSE": "PRVSCLSGPRIC",
+        "INSTRUMENT": "FININSTRMTP",
+        "EXPIRY_DT": "XPRYDT",
+        "OPEN_INT": "OPNINTRST",
+        "CHG_IN_OI": "CHNGINOPNINTRST",
+    }
+    if report in ("equity_udiff", "fo_udiff") and raw in legacy:
+        return legacy[raw]
+    if report == "participant_oi" and raw in {"TRADE_DATE", "TRADING_DATE", "DATE"}:
+        return "TRADDT"
     return ALIASES.get(raw, re.sub(r"[^A-Z0-9]", "", raw))
 def iso_date(value: str) -> str:
     value = value.strip()
@@ -40,13 +57,13 @@ def read_report(path: Path, report: str) -> dict:
     header_i = None
     required = REPORTS[report]["required"]
     for i, row in enumerate(rows[:15]):
-        normalized = {norm_col(c) for c in row if c.strip()}
+        normalized = {norm_col(c, report) for c in row if c.strip()}
         if required.issubset(normalized):
             header_i = i; break
     if header_i is None:
         raise ValueError(f"{report}: required header not found in first 15 rows")
     original_header = [c.strip() for c in rows[header_i]]
-    keys = [norm_col(c) for c in original_header]
+    keys = [norm_col(c, report) for c in original_header]
     records = []
     for row_num, row in enumerate(rows[header_i+1:], start=header_i+2):
         if not any(c.strip() for c in row): continue
@@ -56,7 +73,7 @@ def read_report(path: Path, report: str) -> dict:
         records.append({k: v.strip() for k, v in zip(keys, row) if k})
     if not records:
         raise ValueError(f"{report}: no data rows")
-    dates = sorted({iso_date(v) for r in records if (v := (r.get("TRADDT") or r.get("DATE1") or ""))})
+    dates = sorted({iso_date(v) for r in records if (v := (r.get("TRADDT") or r.get("DATE1") or r.get("TIMESTAMP") or r.get("TRADEDATE") or r.get("TRADINGDATE") or ""))})
     return {"report": report, "source_file": path.name, "header_row": header_i+1,
             "columns": keys, "row_count": len(records), "trading_dates": dates,
             "records": records}
