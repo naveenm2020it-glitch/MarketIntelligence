@@ -48,3 +48,21 @@ A repository update is configured to start the NSE Daily Downloader workflow on 
 - The downloader summary now explicitly lists missing report categories and trading-date consistency status.
 
 The GitHub Releases archive is a durable project archive, but it is still hosted in the same GitHub repository/account. A separate object-storage backup is a future resilience improvement, not yet configured.
+
+
+## Scheduled archive monitoring
+
+- The NSE downloader runs at 17:00 Asia/Kolkata, Monday-Friday.
+- The archive monitor runs at 17:50 Asia/Kolkata, Monday-Friday. It checks that the scheduled downloader run completed successfully and downloads the current-day GitHub Release ZIP to verify ZIP integrity and the included validation summary.
+- A manual monitor run can use `archive-only` mode to validate the current-day Release without requiring a scheduled event; `scheduled` mode checks both.
+
+## Optional independent S3-compatible backup
+
+The downloader workflow can mirror the verified daily ZIP to an independent S3-compatible object-storage bucket. Configure these as GitHub Actions repository secrets (Settings -> Secrets and variables -> Actions -> New repository secret):
+
+- `S3_ENDPOINT` — provider endpoint URL (for Cloudflare R2, the account-specific R2 S3 API endpoint).
+- `S3_BUCKET` — bucket name.
+- `S3_ACCESS_KEY_ID` — access key ID with write/read-head permission for the backup bucket.
+- `S3_SECRET_ACCESS_KEY` — matching secret access key.
+
+The workflow uploads to `nse-market-data/YYYY-MM-DD/nse-market-data-YYYY-MM-DD.zip` and verifies the remote object size using `head-object`. If these secrets are absent, the independent backup step reports `NOT CONFIGURED` and does not block the GitHub Release archive. Do not put credentials in source files, issues, or chat messages.
