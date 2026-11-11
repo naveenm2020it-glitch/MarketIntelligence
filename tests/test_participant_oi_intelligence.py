@@ -47,7 +47,8 @@ class ParticipantOIIntelligenceTests(unittest.TestCase):
             result=run(source,root/"out.json",history)
             self.assertEqual(result["comparison_date"],"2026-11-10")
             self.assertEqual(result["participant_changes_vs_previous_day"]["FII"]["index_futures_net_long"],10)
-\n    def test_end_to_end_without_previous_day(self):
+
+    def test_end_to_end_without_previous_day(self):
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp); day=root/"normalized"/"2026-11-11"
             day.mkdir(parents=True)
