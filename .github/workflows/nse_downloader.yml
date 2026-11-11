@@ -66,7 +66,7 @@ jobs:
                   remote.setdefault("records", []).append(row)
           remote["updated_at_utc"] = max(remote.get("updated_at_utc", ""), local.get("updated_at_utc", ""))
           remote_path.parent.mkdir(parents=True, exist_ok=True)
-          remote_path.write_text(json.dumps(remote, indent=2, ensure_ascii=False) + "\\n")
+          remote_path.write_text(json.dumps(remote, indent=2, ensure_ascii=False) + "\n")
           PY
               git add data/history/manifest.json
               git commit -m "chore: merge NSE report history after concurrent update"
