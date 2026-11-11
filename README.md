@@ -26,3 +26,7 @@ python downloader/nse_downloader.py
 ```
 
 No desktop installation is required for normal operation; use GitHub Actions from the GitHub mobile website/app.
+
+
+## Verification trigger
+A repository update is configured to start the NSE Daily Downloader workflow on the main branch.
