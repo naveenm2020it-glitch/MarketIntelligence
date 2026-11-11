@@ -34,6 +34,8 @@ def norm_col(value: str, report: str | None = None) -> str:
     }
     if report in ("equity_udiff", "fo_udiff") and raw in legacy:
         return legacy[raw]
+    if report == "participant_oi" and raw in {"TRADE_DATE", "TRADING_DATE", "DATE"}:
+        return "TRADDT"
     return ALIASES.get(raw, re.sub(r"[^A-Z0-9]", "", raw))
 def iso_date(value: str) -> str:
     value = value.strip()
@@ -71,7 +73,7 @@ def read_report(path: Path, report: str) -> dict:
         records.append({k: v.strip() for k, v in zip(keys, row) if k})
     if not records:
         raise ValueError(f"{report}: no data rows")
-    dates = sorted({iso_date(v) for r in records if (v := (r.get("TRADDT") or r.get("DATE1") or r.get("TIMESTAMP") or ""))})
+    dates = sorted({iso_date(v) for r in records if (v := (r.get("TRADDT") or r.get("DATE1") or r.get("TIMESTAMP") or r.get("TRADEDATE") or r.get("TRADINGDATE") or ""))})
     return {"report": report, "source_file": path.name, "header_row": header_i+1,
             "columns": keys, "row_count": len(records), "trading_dates": dates,
             "records": records}
