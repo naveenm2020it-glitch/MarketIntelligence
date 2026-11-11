@@ -42,7 +42,8 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/analysis/ data/backfill/
+          mkdir -p data/analysis data/backfill
+          git add -A -- data/analysis data/backfill
           if ! git diff --cached --quiet; then
             git commit -m "data: backfill historical NSE EOD agent snapshots"
             git pull --rebase origin main
