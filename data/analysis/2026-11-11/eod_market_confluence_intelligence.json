@@ -4,11 +4,11 @@
   "status": "passed",
   "trading_date": "2026-11-11",
   "data_scope": "EOD market-direction confluence only",
-  "direction": "neutral_or_mixed",
+  "direction": "bullish",
   "confidence": "low",
-  "confidence_score": 10,
-  "score": -0.1,
-  "coverage_percent": 100.0,
+  "confidence_score": 20,
+  "score": 0.2857,
+  "coverage_percent": 70.0,
   "signals": {
     "participant": {
       "direction": "bearish",
@@ -42,8 +42,8 @@
       }
     },
     "options": {
-      "direction": "bearish",
-      "available": true,
+      "direction": "unavailable",
+      "available": false,
       "evidence": {
         "expiry": "2026-11-17",
         "highest_put_oi_support": {
@@ -60,7 +60,7 @@
         },
         "max_pain": 25100.0
       },
-      "note": "Compares top Put OI with top Call OI for the nearest listed expiry; descriptive only."
+      "note": "Nearest-expiry Put/Call OI is retained as descriptive support/resistance evidence only; it is not converted into a directional signal."
     }
   },
   "summary_method": "Weighted signed agreement across available EOD signals, normalized by available weight. Missing sources reduce coverage and confidence; no unavailable source is imputed.",
@@ -71,10 +71,6 @@
     },
     "futures": {
       "direction": "bullish",
-      "weight": 30
-    },
-    "options": {
-      "direction": "bearish",
       "weight": 30
     },
     "delivery": {
