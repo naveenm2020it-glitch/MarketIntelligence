@@ -19,8 +19,10 @@ class Agent6Tests(unittest.TestCase):
                           {"expiry":"2026-11-24","support_levels":[{"put_oi":100}],
                            "resistance_levels":[{"call_oi":900}],"max_pain":26000}]}
         x=options_signal(data)
-        self.assertEqual(x["direction"],"bullish")
+        self.assertEqual(x["direction"],"unavailable")
+        self.assertFalse(x["available"])
         self.assertEqual(x["evidence"]["expiry"],"2026-11-17")
+        self.assertEqual(x["evidence"]["highest_put_oi_support"]["put_oi"],500)
     def test_delivery_breadth(self):
         data={"stocks":[{"price_change_percentage":1.0,"delivery_percentage":60},
                         {"price_change_percentage":-0.2,"delivery_percentage":50}]}
@@ -30,6 +32,13 @@ class Agent6Tests(unittest.TestCase):
                    "options":{"direction":"bearish"},"delivery":{"direction":"unavailable"}})
         self.assertEqual(x["coverage_percent"],55.0)
         self.assertEqual(x["confidence"],"low")
+    def test_mixed_signal_counts_toward_coverage(self):
+        sig={"participant":{"direction":"mixed"},"futures":{"direction":"bullish"},
+             "options":{"direction":"unavailable"},"delivery":{"direction":"unavailable"}}
+        x=combine(sig)
+        self.assertEqual(x["coverage_percent"],55.0)
+        self.assertEqual(x["evidence_weights"]["participant"]["direction"],"mixed")
+
     def test_all_bullish_high_confidence(self):
         sig={k:{"direction":"bullish"} for k in ("participant","futures","options","delivery")}
         x=combine(sig)
