@@ -59,6 +59,13 @@ class Agent6Tests(unittest.TestCase):
             result=run(day,out)
             self.assertEqual(result["status"],"passed")
             self.assertTrue(out.exists())
+    def test_empty_snapshot_is_rejected(self):
+        with tempfile.TemporaryDirectory() as d:
+            day=Path(d)/"2026-11-11"; day.mkdir()
+            (day/"delivery_strength.json").write_text("")
+            with self.assertRaises(ValueError):
+                run(day,day/"out.json")
+
     def test_date_mismatch_rejected(self):
         with tempfile.TemporaryDirectory() as d:
             day=Path(d)/"2026-11-11"; day.mkdir()
