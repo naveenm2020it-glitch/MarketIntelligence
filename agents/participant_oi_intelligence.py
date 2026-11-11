@@ -124,15 +124,16 @@ def load_normalized(path: Path) -> dict:
     return payload
 
 def find_previous(root: Path, current_date: str) -> Path | None:
+    # Prefer persisted Agent 2 snapshots so comparison survives ephemeral GitHub runners.
     candidates = []
-    for path in root.glob("*/normalized.json"):
+    for path in root.glob("*/participant_oi_intelligence.json"):
         day = path.parent.name
         if day >= current_date: continue
         try:
-            payload = load_normalized(path)
-            if payload.get("observed_trading_dates") and max(payload["observed_trading_dates"]) < current_date:
+            snapshot = json.loads(path.read_text(encoding="utf-8"))
+            if snapshot.get("agent") == "participant_oi_intelligence" and snapshot.get("status") == "passed":
                 candidates.append((day, path))
-        except (ValueError, OSError, json.JSONDecodeError):
+        except (OSError, json.JSONDecodeError):
             continue
     return sorted(candidates, key=lambda x: x[0])[-1][1] if candidates else None
 
@@ -140,11 +141,12 @@ def run(input_path: Path, output_path: Path, history_root: Path | None = None) -
     payload = load_normalized(input_path)
     current = analyze_report(payload["reports"]["participant_oi"])
     previous_path = find_previous(history_root, payload["requested_date"]) if history_root else None
-    previous = analyze_report(load_normalized(previous_path)["reports"]["participant_oi"]) if previous_path else None
+    previous_snapshot = json.loads(previous_path.read_text(encoding="utf-8")) if previous_path else None
+    previous = previous_snapshot.get("participants", {}) if previous_snapshot else {}
     changes = {}
     if previous:
         for participant, current_values in current["participants"].items():
-            old = previous["participants"].get(participant, {})
+            old = previous.get(participant, {})
             changes[participant] = {}
             for key in ("index_futures_net_long", "index_options_directional_net"):
                 now, before = current_values.get(key), old.get(key)
