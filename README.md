@@ -66,3 +66,8 @@ The downloader workflow can mirror the verified daily ZIP to an independent S3-c
 - `S3_SECRET_ACCESS_KEY` — matching secret access key.
 
 The workflow uploads to `nse-market-data/YYYY-MM-DD/nse-market-data-YYYY-MM-DD.zip` and verifies the remote object size using `head-object`. If these secrets are absent, the independent backup step reports `NOT CONFIGURED` and does not block the GitHub Release archive. Do not put credentials in source files, issues, or chat messages.
+
+
+## Agent 2: FII/DII Participant OI Intelligence
+
+Consumes only the normalized NSE Participant-wise Open Interest report. It reports FII, DII, Client and Proprietary positions where present; computes index-futures net long/short and a transparent directional index-options net; and compares with the latest earlier valid normalized trading day when available. Missing columns stay unavailable. The output is EOD descriptive intelligence, not intraday flow or a standalone trade recommendation. Historical accuracy is not claimed.
