@@ -59,7 +59,7 @@ def analyze(files: list[dict], previous_files: list[dict] | None = None) -> dict
     for previous in flatten(previous_files or []):
         prev = {norm_key(k): v for k, v in previous.items()}
         key = contract_key(prev)
-        close_value = first_num(prev, "CLSPRIC", "CLOSEPRICE")
+        close_value = first_num(prev, "CLSPRIC", "CLOSEPRICE", "CLOSE")
         if close_value is not None:
             previous_closes[key] = close_value
     raw_rows = flatten(files)
@@ -77,15 +77,15 @@ def analyze(files: list[dict], previous_files: list[dict] | None = None) -> dict
         canonical_instrument = INSTRUMENT_CANONICAL[instrument]
         symbol = str(row.get("TCKRSYMB") or row.get("SYMBOL") or "").strip().upper()
         expiry = str(row.get("XPRYDT") or row.get("EXPIRYDT") or "").strip()
-        close = first_num(row, "CLSPRIC", "CLOSEPRICE")
+        close = first_num(row, "CLSPRIC", "CLOSEPRICE", "CLOSE")
         previous_close = first_num(row, "PRVSCLSGPRIC", "PREVCLOSE", "PREVIOUSCLOSE")
         previous_close_source = "current_report" if previous_close is not None else None
         if previous_close is None:
             previous_close = previous_closes.get(contract_key(row))
             if previous_close is not None:
                 previous_close_source = "previous_session_same_contract_close"
-        oi = first_num(row, "OPNINTRST", "OPENINTEREST")
-        oi_change = first_num(row, "CHNGINOPNINTRST", "CHANGEINOPENINTEREST", "CHNGINOPNINT")
+        oi = first_num(row, "OPNINTRST", "OPENINTEREST", "OPENINT", "OPEN_INT")
+        oi_change = first_num(row, "CHNGINOPNINTRST", "CHANGEINOPENINTEREST", "CHNGINOPNINT", "CHG_IN_OI", "CHGINOI")
         if not symbol or close is None or previous_close is None or oi_change is None:
             invalid_rows += 1
             continue
