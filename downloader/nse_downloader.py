@@ -12,13 +12,17 @@ import zipfile
 from datetime import datetime
 from pathlib import Path
 from urllib.parse import urljoin
+from datetime import timezone
 
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 from zoneinfo import ZoneInfo
 
 RAW = Path("data/raw")
 EXTRACTED = Path("data/extracted")
 LOGS = Path("logs")
+HISTORY = Path("data/history/manifest.json")
 IST = ZoneInfo("Asia/Kolkata")
 TODAY = datetime.now(IST).date().isoformat()
 NSE = "https://www.nseindia.com"
@@ -149,6 +153,45 @@ def validate_csv(path: Path, report_key: str) -> dict:
         "header": header,
     }
 
+def record_history(report_key: str, item: dict, result: dict) -> bool:
+    """Persist a checksum-based observation so duplicates are detected across ephemeral runners."""
+    HISTORY.parent.mkdir(parents=True, exist_ok=True)
+    if HISTORY.exists():
+        history = json.loads(HISTORY.read_text(encoding="utf-8"))
+    else:
+        history = {"schema_version": 1, "description": "NSE report observation history; raw files remain in Actions artifacts", "records": []}
+
+    trading_date = parse_date(str(item.get("tradingDate", ""))) or TODAY
+    identity = (report_key, trading_date, result["sha256"])
+    existing = next((row for row in history["records"]
+                     if (row.get("report"), row.get("trading_date"), row.get("sha256")) == identity), None)
+    now = datetime.now(timezone.utc).isoformat()
+    if existing:
+        existing["seen_count"] = int(existing.get("seen_count", 1)) + 1
+        existing["last_seen_utc"] = now
+        duplicate = True
+    else:
+        history["records"].append({
+            "report": report_key,
+            "trading_date": trading_date,
+            "file_key": item.get("fileKey"),
+            "filename": result["filename"],
+            "bytes": result["bytes"],
+            "sha256": result["sha256"],
+            "first_seen_utc": now,
+            "last_seen_utc": now,
+            "seen_count": 1,
+        })
+        duplicate = False
+
+    history["updated_at_utc"] = now
+    HISTORY.write_text(json.dumps(history, indent=2, ensure_ascii=False) + "\\n", encoding="utf-8")
+    logging.info("%s across workflow runs: %s / %s / %s",
+                 "DUPLICATE CONFIRMED" if duplicate else "NEW HISTORICAL REPORT",
+                 report_key, trading_date, result["sha256"])
+    return duplicate
+
+
 def download_report(session: requests.Session, report_key: str, item: dict) -> dict:
     filename = safe_name(str(item["fileActlName"]))
     file_path = str(item["filePath"])
@@ -158,10 +201,10 @@ def download_report(session: requests.Session, report_key: str, item: dict) -> d
     folder = RAW / TODAY / report_key
     folder.mkdir(parents=True, exist_ok=True)
     target = folder / filename
-    duplicate = target.exists() and target.stat().st_size > 0
-    if duplicate:
+    local_reuse = target.exists() and target.stat().st_size > 0
+    if local_reuse:
         payload = target.read_bytes()
-        logging.info("Duplicate download detected; reusing existing file: %s", target)
+        logging.info("Same-run local file already exists; validating it: %s", target)
     else:
         logging.info("Downloading %s (%s) from %s", report_key, item.get("fileKey"), url)
         response = session.get(url, timeout=120)
@@ -180,7 +223,8 @@ def download_report(session: requests.Session, report_key: str, item: dict) -> d
         "download_url": url,
         "bytes": len(payload),
         "sha256": hashlib.sha256(payload).hexdigest(),
-        "duplicate": duplicate,
+        "duplicate": False,
+        "local_reuse": local_reuse,
     }
 
     if payload[:4] == b"PK\x03\x04" or target.suffix.lower() == ".zip":
@@ -203,6 +247,7 @@ def download_report(session: requests.Session, report_key: str, item: dict) -> d
             result["extracted_csvs"] = validations
     else:
         result["csv_validation"] = validate_csv(target, report_key)
+    result["duplicate"] = record_history(report_key, item, result)
     logging.info("REPORT VERIFIED: %s (%d bytes)", report_key, len(payload))
     return result
 
@@ -213,8 +258,25 @@ def main() -> int:
         "source": "NSE official daily-reports API",
         "reports": {},
         "failures": {},
+        "history_manifest": str(HISTORY),
+        "retry_policy": {"max_retries": 5, "backoff_factor_seconds": 1.5, "retry_statuses": [429, 500, 502, 503, 504]},
     }
     session = requests.Session()
+    retry = Retry(
+        total=5,
+        connect=5,
+        read=5,
+        status=5,
+        backoff_factor=1.5,
+        status_forcelist=(429, 500, 502, 503, 504),
+        allowed_methods=frozenset(["GET"]),
+        respect_retry_after_header=True,
+        raise_on_status=False,
+    )
+    adapter = HTTPAdapter(max_retries=retry, pool_connections=10, pool_maxsize=10)
+    session.mount("https://", adapter)
+    session.mount("http://", adapter)
+    logging.info("HTTP retry policy enabled: up to 5 retries for transient GET failures")
     session.headers.update({
         "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/128 Safari/537.36",
         "Accept": "application/json, text/plain, */*",
