@@ -21,11 +21,17 @@ class ParticipantOIIntelligenceTests(unittest.TestCase):
         result = analyze_report(self.report([{"CLIENTTYPE":"FII","FUTUREINDEXLONG":"10"}]))
         self.assertIsNone(result["participants"]["FII"]["index_futures_net_long"])
         self.assertEqual(result["unrecognized_rows"], [])
-    def test_mixed_assessment(self):
+    def test_participant_offsets_do_not_cancel_market_assessment(self):
         assessment = overall_assessment({
-            "FII":{"index_futures_net_long":10,"index_options_directional_net":-5}
+            "FII":{"index_futures_net_long":-70,"index_options_directional_net":-680},
+            "CLIENT":{"index_futures_net_long":67,"index_options_directional_net":758},
+            "DII":{"index_futures_net_long":27,"index_options_directional_net":-104},
+            "PRO":{"index_futures_net_long":-23,"index_options_directional_net":30}
         })
-        self.assertEqual(assessment["classification"], "mixed")
+        self.assertEqual(assessment["classification"], "mixed_participant_positioning")
+        self.assertEqual(assessment["participant_bias"]["FII"], "bearish")
+        self.assertEqual(assessment["participant_bias"]["CLIENT"], "bullish")
+        self.assertNotIn("index_futures_net_total", assessment)
 
     def test_comparison_uses_persisted_previous_agent_snapshot(self):
         with tempfile.TemporaryDirectory() as tmp:
