@@ -1,6 +1,9 @@
 name: NSE Archive and Schedule Monitor
 
 on:
+  push:
+    paths:
+      - '.github/workflows/nse_archive_monitor.yml'
   workflow_dispatch:
     inputs:
       check_mode:
