@@ -46,7 +46,7 @@ jobs:
         run: python agents/equity_delivery_strength.py --input "data/normalized/$(TZ=Asia/Kolkata date +%Y-%m-%d)/normalized.json" --history-root data/analysis
       - name: Run Agent 4 — Futures Buildup Intelligence
         run: python agents/futures_buildup_intelligence.py --input "data/normalized/$(TZ=Asia/Kolkata date +%Y-%m-%d)/normalized.json"
-      - name: Persist Agent 2 daily snapshot for next-session comparison
+      - name: Run Agent 5 — NIFTY Option OI Support Resistance and Max Pain\n        run: python agents/nifty_option_oi_intelligence.py --input "data/normalized/$(TZ=Asia/Kolkata date +%Y-%m-%d)/normalized.json"\n      - name: Persist Agent analysis snapshots\n        run: |\n          git config user.name "github-actions[bot]"\n          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"\n          git add data/analysis/\n          if ! git diff --cached --quiet; then\n            git commit -m "data: persist daily AI agent analysis snapshots"\n            git stash push --include-untracked --keep-index -m "temporary NSE run outputs"\n            git pull --rebase origin main\n            git push\n          else\n            echo "No new agent snapshots to persist."\n          fi\n      - name: Upload normalized output\n        if: always()\n        uses: actions/upload-artifact@v4\n        with:\n          name: nse-normalized-agent-output\n          path: |\n            data/normalized/\n            logs/\n          if-no-files-found: warn\n          retention-days: 30\n\n# OLD_STEP_MARKER
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
