@@ -78,7 +78,8 @@ def analyze(files: list[dict], previous_files: list[dict] | None = None) -> dict
         symbol = str(row.get("TCKRSYMB") or row.get("SYMBOL") or "").strip().upper()
         expiry = str(row.get("XPRYDT") or row.get("EXPIRYDT") or "").strip()
         close = first_num(row, "CLSPRIC", "CLOSEPRICE")
-        previous_close = first_num(row, "PRVSCLSGPRIC", "PREVCLOSE", "PREVIOUSCLOSE")\n        previous_close_source = "current_report" if previous_close is not None else None\n        if previous_close is None:\n            previous_close = previous_closes.get(contract_key(row))\n            if previous_close is not None:\n                previous_close_source = "previous_session_same_contract_close"
+        previous_close = first_num(row, "PRVSCLSGPRIC", "PREVCLOSE", "PREVIOUSCLOSE")
+        previous_close_source = "current_report" if previous_close is not None else None\n        if previous_close is None:\n            previous_close = previous_closes.get(contract_key(row))\n            if previous_close is not None:\n                previous_close_source = "previous_session_same_contract_close"
         oi = first_num(row, "OPNINTRST", "OPENINTEREST")
         oi_change = first_num(row, "CHNGINOPNINTRST", "CHANGEINOPENINTEREST", "CHNGINOPNINT")
         if not symbol or close is None or previous_close is None or oi_change is None:
@@ -135,7 +136,10 @@ def run(input_path: Path, output_path: Path, previous_input_path: Path | None = 
     files = payload.get("reports", {}).get("fo_udiff", [])
     if not files:
         raise ValueError("Required F&O UDiFF report is missing")
-    previous_files = []\n    if previous_input_path is not None:\n        previous_payload = json.loads(previous_input_path.read_text(encoding="utf-8"))\n        previous_files = previous_payload.get("reports", {}).get("fo_udiff", [])\n    analysis = analyze(files, previous_files)
+    previous_files = []
+    if previous_input_path is not None:
+        previous_payload = json.loads(previous_input_path.read_text(encoding="utf-8"))
+        previous_files = previous_payload.get("reports", {}).get("fo_udiff", [])\n    analysis = analyze(files, previous_files)
     result = {
         "schema_version": 1, "agent": "futures_buildup_intelligence",
         "status": "passed", "data_scope": "EOD FUTIDX/FUTSTK futures buildup only",
