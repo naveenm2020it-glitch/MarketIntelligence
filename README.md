@@ -91,3 +91,16 @@ Uses only the NIFTY option contracts in the normalized NSE F&O UDiFF report. Con
 ## Agent 6: EOD Market Direction and Confluence Intelligence
 
 Consumes only the persisted EOD outputs from Agents 2-5. It keeps FII and DII positioning separate, uses NIFTY FUTIDX (not stock futures) for index-futures confirmation, compares top Put OI support with top Call OI resistance for the nearest listed expiry, and derives equity delivery breadth only from matched stock price/delivery rows. A weighted, signed evidence score is normalized over available inputs; missing inputs reduce coverage and confidence rather than being imputed. The output is a rule-based bullish/bearish/neutral-or-mixed EOD assessment, not a calibrated probability, intraday signal, or standalone trade recommendation. Chronological walk-forward backtesting is required before making any accuracy claim.
+
+## Agent 7: Chronological Walk-Forward Validation
+
+Agent 7 evaluates Agent 6 direction against the next available archived session using the NIFTY FUTIDX contract close on the signal date and the same expiry contract close on the next archived date. It never joins different expiries across a rollover. The target is explicitly a NIFTY futures proxy, not the NIFTY 50 cash index.
+
+- Prediction is read only from the signal-date Agent 6 snapshot; target close is read only from the following archived date.
+- A fixed 10-basis-point neutral band labels the next-session move bullish, bearish or neutral.
+- Reports accuracy, balanced accuracy, macro F1, directional accuracy, per-class precision/recall, confusion matrix and descriptive results by Agent 6 confidence grade.
+- Missing, failed, date-mismatched or unsupported snapshots are not imputed. No same-expiry contract or an excessive archive-date gap is skipped and disclosed.
+- At least 30 valid chronological pairs are required for a passed validation status. Below that, status is `insufficient_data`; any available metrics are exploratory and no reliability grade is assigned.
+- Confidence grades are heuristic labels, not probabilities. This validation does not establish profitability and excludes costs, slippage and execution.
+- The workflow runs Agent 7 after Agent 6 and before persisting the daily analysis snapshots. Historical sample size grows only as additional valid daily snapshots are archived.
+
