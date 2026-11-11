@@ -139,7 +139,8 @@ def run(input_path: Path, output_path: Path, previous_input_path: Path | None = 
     previous_files = []
     if previous_input_path is not None:
         previous_payload = json.loads(previous_input_path.read_text(encoding="utf-8"))
-        previous_files = previous_payload.get("reports", {}).get("fo_udiff", [])\n    analysis = analyze(files, previous_files)
+        previous_files = previous_payload.get("reports", {}).get("fo_udiff", [])
+    analysis = analyze(files, previous_files)
     result = {
         "schema_version": 1, "agent": "futures_buildup_intelligence",
         "status": "passed", "data_scope": "EOD FUTIDX/FUTSTK futures buildup only",
