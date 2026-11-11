@@ -260,6 +260,9 @@ def main() -> int:
         "failures": {},
         "history_manifest": str(HISTORY),
         "retry_policy": {"max_retries": 5, "backoff_factor_seconds": 1.5, "retry_statuses": [429, 500, 502, 503, 504]},
+        "report_trading_dates": {},
+        "missing_reports": [],
+        "trading_date_consistency": "not_checked",
     }
     session = requests.Session()
     retry = Retry(
@@ -297,10 +300,28 @@ def main() -> int:
             if segment not in catalogues:
                 raise ValueError(f"NSE {segment} catalogue unavailable")
             item = find_report(catalogues[segment], report_key)
+            report_date = parse_date(str(item.get("tradingDate", "")))
+            if not report_date:
+                raise ValueError(f"{report_key}: NSE catalogue entry has no usable tradingDate")
+            summary["report_trading_dates"][report_key] = report_date
             summary["reports"][report_key] = download_report(session, report_key, item)
         except Exception as exc:
             summary["failures"][report_key] = str(exc)
             logging.exception("Failed report %s", report_key)
+
+    expected = set(REPORTS)
+    missing = sorted(expected - set(summary["reports"]))
+    summary["missing_reports"] = missing
+    observed_dates = sorted(set(summary["report_trading_dates"].values()))
+    if missing:
+        summary["failures"]["missing_reports"] = ", ".join(missing)
+    if len(observed_dates) == 1 and not missing:
+        summary["trading_date_consistency"] = "passed"
+    elif len(observed_dates) > 1:
+        summary["trading_date_consistency"] = "failed"
+        summary["failures"]["trading_date_consistency"] = "Report trading dates differ: " + ", ".join(observed_dates)
+    else:
+        summary["trading_date_consistency"] = "incomplete"
 
     LOGS.mkdir(parents=True, exist_ok=True)
     summary_path = LOGS / f"nse_summary_{TODAY}.json"
