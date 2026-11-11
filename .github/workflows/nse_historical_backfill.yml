@@ -1,10 +1,6 @@
 name: NSE Historical EOD Backfill and Agent Replay
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'downloader/nse_historical_backfill.py'
-      - '.github/workflows/nse_historical_backfill.yml'
+  # Historical runs are manual so code pushes cannot accidentally start a wide backfill.
   workflow_dispatch:
     inputs:
       start_date:
