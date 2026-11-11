@@ -44,7 +44,34 @@ jobs:
           git add data/history/manifest.json
           if ! git diff --cached --quiet; then
             git commit -m "chore: update NSE report history manifest"
-            git push
+            if ! git push; then
+              echo "History push raced with another repository update; merging latest remote history and retrying."
+              cp data/history/manifest.json /tmp/nse-history-local.json
+              git fetch origin main
+              git reset --hard origin/main
+              python - /tmp/nse-history-local.json data/history/manifest.json <<'PY'
+          import json, sys
+          from pathlib import Path
+          local_path, remote_path = map(Path, sys.argv[1:])
+          local = json.loads(local_path.read_text())
+          remote = json.loads(remote_path.read_text()) if remote_path.exists() else {"schema_version": 1, "records": []}
+          rows = {(r["report"], r["trading_date"], r["sha256"]): r for r in remote.get("records", [])}
+          for row in local.get("records", []):
+              key = (row["report"], row["trading_date"], row["sha256"])
+              if key in rows:
+                  current = rows[key]
+                  current["seen_count"] = int(current.get("seen_count", 1)) + 1
+                  current["last_seen_utc"] = max(current.get("last_seen_utc", ""), row.get("last_seen_utc", ""))
+              else:
+                  remote.setdefault("records", []).append(row)
+          remote["updated_at_utc"] = max(remote.get("updated_at_utc", ""), local.get("updated_at_utc", ""))
+          remote_path.parent.mkdir(parents=True, exist_ok=True)
+          remote_path.write_text(json.dumps(remote, indent=2, ensure_ascii=False) + "\\n")
+          PY
+              git add data/history/manifest.json
+              git commit -m "chore: merge NSE report history after concurrent update"
+              git push
+            fi
           else
             echo "History manifest unchanged; no commit needed."
           fi
