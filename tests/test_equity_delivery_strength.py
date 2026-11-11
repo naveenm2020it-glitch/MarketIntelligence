@@ -6,13 +6,15 @@ class DeliveryTests(unittest.TestCase):
     def payload(self):
         return {"status":"passed","date_consistency":"passed","requested_date":"2026-11-11","reports":{
           "equity_udiff":[{"records":[{"TckrSymb":"AAA","ClsPric":"101","PrvsClsgPric":"100","TtlTradgVol":"1000"},{"TckrSymb":"BBB","ClsPric":"49","PrvsClsgPric":"50","TtlTradgVol":"2000"}]}],
-          "security_delivery":[{"records":[{"SYMBOL":"AAA","DELIVQTY":"600","DELIVPER":"60","TTL_TRD_QNTY":"1000"},{"SYMBOL":"BBB","DELIVQTY":"500","DELIVPER":"25","TTL_TRD_QNTY":"2000"},{"SYMBOL":"CCC","DELIVQTY":"80","DELIVPER":"40","TTL_TRD_QNTY":"200"}]}]}}
+          "security_delivery":[{"records":[{"SYMBOL":"AAA","SERIES":"EQ","DELIVQTY":"600","DELIVPER":"60","TTL_TRD_QNTY":"1000"},{"SYMBOL":"BBB","SERIES":"EQ","DELIVQTY":"500","DELIVPER":"25","TTL_TRD_QNTY":"2000"},{"SYMBOL":"CCC","SERIES":"EQ","DELIVQTY":"80","DELIVPER":"40","TTL_TRD_QNTY":"200"}]}]}}
     def test_join_and_price_change(self):
         x=next(v for v in build_rows(self.payload()) if v["symbol"]=="AAA")
         self.assertEqual(x["price_change_percentage"],1); self.assertTrue(x["equity_bhavcopy_match"])
     def test_invalid_delivery_percentage_excluded(self):
-        p=self.payload(); p["reports"]["security_delivery"][0]["records"].append({"SYMBOL":"BAD","DELIVQTY":"10","DELIVPER":"120"})
+        p=self.payload(); p["reports"]["security_delivery"][0]["records"].append({"SYMBOL":"BAD","SERIES":"EQ","DELIVQTY":"10","DELIVPER":"120"})
         self.assertNotIn("BAD",[x["symbol"] for x in build_rows(p)])
+        p["reports"]["security_delivery"][0]["records"].append({"SYMBOL":"BOND","SERIES":"GS","DELIVQTY":"9999","DELIVPER":"100"})
+        self.assertNotIn("BOND",[x["symbol"] for x in build_rows(p)])
     def test_previous_day_comparison(self):
         with tempfile.TemporaryDirectory() as d:
             root=Path(d); old=root/"2026-11-10"; old.mkdir()
