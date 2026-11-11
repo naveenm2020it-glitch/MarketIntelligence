@@ -1,10 +1,6 @@
 name: NSE Historical EOD Backfill and Agent Replay
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'downloader/nse_historical_backfill.py'
-      - '.github/workflows/nse_historical_backfill.yml'
+  # Historical runs are manual so code pushes cannot accidentally start a wide backfill.
   workflow_dispatch:
     inputs:
       start_date:
@@ -42,7 +38,8 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/analysis/ data/backfill/
+          mkdir -p data/analysis data/backfill
+          git add -A -- data/analysis data/backfill
           if ! git diff --cached --quiet; then
             git commit -m "data: backfill historical NSE EOD agent snapshots"
             git pull --rebase origin main
