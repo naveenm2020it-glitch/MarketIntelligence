@@ -4,6 +4,11 @@ from __future__ import annotations
 import argparse, csv, json, logging, subprocess, sys, zipfile
 from datetime import date, datetime, timedelta
 from pathlib import Path
+
+# Ensure direct script execution can import sibling top-level packages (agents, downloader).
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 from urllib.parse import urlparse
 import requests
 from requests.adapters import HTTPAdapter
