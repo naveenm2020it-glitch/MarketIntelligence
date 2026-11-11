@@ -73,10 +73,14 @@
   },
   "participant_changes_vs_previous_day": null,
   "overall_assessment": {
-    "classification": "mixed",
-    "index_futures_net_total": 0.0,
-    "index_options_directional_net_total": -1.0,
-    "method": "Sign agreement of summed participant index-futures and directional index-options net positions; mixed when signs disagree."
+    "classification": "mixed_participant_positioning",
+    "participant_bias": {
+      "CLIENT": "bullish",
+      "DII": "mixed",
+      "FII": "bearish",
+      "PRO": "mixed"
+    },
+    "method": "Classifies each participant group from its own index-futures and directional index-options net positions; reports consensus only when all available groups agree. Participant totals are not added because counterpart positions offset."
   },
   "unrecognized_rows": [
     "TOTAL"
