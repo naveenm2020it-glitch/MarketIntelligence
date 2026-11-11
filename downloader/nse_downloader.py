@@ -185,7 +185,7 @@ def record_history(report_key: str, item: dict, result: dict) -> bool:
         duplicate = False
 
     history["updated_at_utc"] = now
-    HISTORY.write_text(json.dumps(history, indent=2, ensure_ascii=False) + "\\n", encoding="utf-8")
+    HISTORY.write_text(json.dumps(history, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     logging.info("%s across workflow runs: %s / %s / %s",
                  "DUPLICATE CONFIRMED" if duplicate else "NEW HISTORICAL REPORT",
                  report_key, trading_date, result["sha256"])
