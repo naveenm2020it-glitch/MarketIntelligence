@@ -65,7 +65,7 @@ class FuturesBuildupTests(unittest.TestCase):
         contract = result["contracts"][0]
         self.assertEqual(contract["previous_close"], 19300.0)
         self.assertEqual(contract["previous_close_source"], "previous_session_same_contract_close")
-        self.assertEqual(contract["price_change"], 184.1)
+        self.assertAlmostEqual(contract["price_change"], 184.1, places=6)
 
     def test_prior_close_never_borrows_from_a_different_expiry(self):
         current = {
