@@ -15,7 +15,7 @@ class NiftyOptionOITests(unittest.TestCase):
         x=analyze([{"records":[self.row("IDO","NIFTY","CE",26000,100,10,"2026-11-26"),self.row("IDO","NIFTY","PE",26000,200,20,"2026-12-31")]}])
         self.assertEqual(x["valid_expiries"],2)
     def test_invalid_rows_counted(self):
-        x=analyze([{"records":[self.row("IDO","NIFTY","XX",26000,100,10)]}]); self.assertEqual(x["invalid_nifty_option_rows"],1)
+        x=analyze([{"records":[self.row("IDO","NIFTY","CE",26000,100,10),self.row("IDO","NIFTY","XX",26000,100,10)]}]); self.assertEqual(x["invalid_nifty_option_rows"],1)
     def test_no_valid_nifty_options_fails(self):
         with self.assertRaises(ValueError): analyze([{"records":[self.row("IDO","BANKNIFTY","CE",26000,100,10)]}])
     def test_run_writes_result_and_requires_valid_normalization(self):
