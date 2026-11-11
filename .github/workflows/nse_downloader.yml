@@ -123,6 +123,41 @@ jobs:
           fi
           gh release upload "$TAG" "nse-market-data-$DATE.zip" --clobber
 
+      - name: Upload independent S3-compatible backup (optional)
+        if: always()
+        env:
+          S3_ENDPOINT: ${{ secrets.S3_ENDPOINT }}
+          S3_BUCKET: ${{ secrets.S3_BUCKET }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: us-east-1
+        run: |
+          DATE="$(TZ=Asia/Kolkata date +%Y-%m-%d)"
+          ARCHIVE="nse-market-data-${DATE}.zip"
+          if [ -z "$S3_ENDPOINT" ] || [ -z "$S3_BUCKET" ] || [ -z "$AWS_ACCESS_KEY_ID" ] || [ -z "$AWS_SECRET_ACCESS_KEY" ]; then
+            echo "Independent S3 backup not configured: add S3_ENDPOINT, S3_BUCKET, S3_ACCESS_KEY_ID and S3_SECRET_ACCESS_KEY repository secrets."
+            echo "Independent S3 backup: NOT CONFIGURED" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          if [ ! -f "$ARCHIVE" ]; then
+            echo "Archive file missing; cannot upload independent backup."
+            exit 1
+          fi
+          python -m pip install --quiet awscli
+          KEY="nse-market-data/${DATE}/${ARCHIVE}"
+          aws s3 cp "$ARCHIVE" "s3://${S3_BUCKET}/${KEY}" --endpoint-url "$S3_ENDPOINT" --only-show-errors
+          aws s3api head-object --bucket "$S3_BUCKET" --key "$KEY" --endpoint-url "$S3_ENDPOINT" > /tmp/s3-head.json
+          python - "$ARCHIVE" /tmp/s3-head.json <<'PY'
+          import json, sys
+          from pathlib import Path
+          local = Path(sys.argv[1]).stat().st_size
+          remote = int(json.load(open(sys.argv[2]))["ContentLength"])
+          if local != remote:
+              raise SystemExit(f"S3 backup size mismatch: local={local} remote={remote}")
+          print(f"Independent S3 backup verified by object size: {remote} bytes")
+          PY
+          echo "Independent S3 backup: VERIFIED ($S3_BUCKET/$KEY)" >> "$GITHUB_STEP_SUMMARY"
+
       - name: Upload reports, extracted CSVs and logs
         if: always()
         uses: actions/upload-artifact@v4
