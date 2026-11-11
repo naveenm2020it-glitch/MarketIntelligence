@@ -45,7 +45,23 @@ def first_num(row: dict[str, Any], *keys: str) -> float | None:
 def flatten(files: list[dict]) -> list[dict]:
     return [record for file in files for record in file.get("records", [])]
 
-def analyze(files: list[dict]) -> dict:
+def contract_key(row: dict[str, Any]) -> tuple[str, str, str, str, str]:
+    return (
+        str(row.get("FININSTRMTP") or row.get("FININSTRMTYPE") or row.get("INSTRUMENT") or "").strip().upper(),
+        str(row.get("TCKRSYMB") or row.get("SYMBOL") or "").strip().upper(),
+        str(row.get("XPRYDT") or row.get("EXPIRYDT") or "").strip().upper(),
+        str(row.get("STRIKEPR") or row.get("STRIKEPRICE") or "").strip(),
+        str(row.get("OPTIONTYP") or row.get("OPTIONTYPE") or "").strip().upper(),
+    )
+
+def analyze(files: list[dict], previous_files: list[dict] | None = None) -> dict:
+    previous_closes = {}
+    for previous in flatten(previous_files or []):
+        prev = {norm_key(k): v for k, v in previous.items()}
+        key = contract_key(prev)
+        close_value = first_num(prev, "CLSPRIC", "CLOSEPRICE")
+        if close_value is not None:
+            previous_closes[key] = close_value
     raw_rows = flatten(files)
     if not raw_rows:
         raise ValueError("F&O Bhavcopy contains no records")
@@ -62,7 +78,7 @@ def analyze(files: list[dict]) -> dict:
         symbol = str(row.get("TCKRSYMB") or row.get("SYMBOL") or "").strip().upper()
         expiry = str(row.get("XPRYDT") or row.get("EXPIRYDT") or "").strip()
         close = first_num(row, "CLSPRIC", "CLOSEPRICE")
-        previous_close = first_num(row, "PRVSCLSGPRIC", "PREVCLOSE", "PREVIOUSCLOSE")
+        previous_close = first_num(row, "PRVSCLSGPRIC", "PREVCLOSE", "PREVIOUSCLOSE")\n        previous_close_source = "current_report" if previous_close is not None else None\n        if previous_close is None:\n            previous_close = previous_closes.get(contract_key(row))\n            if previous_close is not None:\n                previous_close_source = "previous_session_same_contract_close"
         oi = first_num(row, "OPNINTRST", "OPENINTEREST")
         oi_change = first_num(row, "CHNGINOPNINTRST", "CHANGEINOPENINTEREST", "CHNGINOPNINT")
         if not symbol or close is None or previous_close is None or oi_change is None:
@@ -72,7 +88,7 @@ def analyze(files: list[dict]) -> dict:
         price_change_pct = (price_change / previous_close * 100) if previous_close else None
         contracts.append({
             "symbol": symbol, "instrument_type": canonical_instrument, "source_instrument_code": instrument, "expiry": expiry or None,
-            "close_price": close, "previous_close": previous_close,
+            "close_price": close, "previous_close": previous_close, "previous_close_source": previous_close_source,
             "price_change": price_change,
             "price_change_percentage": price_change_pct,
             "open_interest": oi, "open_interest_change": oi_change,
@@ -119,7 +135,7 @@ def run(input_path: Path, output_path: Path) -> dict:
     files = payload.get("reports", {}).get("fo_udiff", [])
     if not files:
         raise ValueError("Required F&O UDiFF report is missing")
-    analysis = analyze(files)
+    previous_files = []\n    if previous_input_path is not None:\n        previous_payload = json.loads(previous_input_path.read_text(encoding="utf-8"))\n        previous_files = previous_payload.get("reports", {}).get("fo_udiff", [])\n    analysis = analyze(files, previous_files)
     result = {
         "schema_version": 1, "agent": "futures_buildup_intelligence",
         "status": "passed", "data_scope": "EOD FUTIDX/FUTSTK futures buildup only",
@@ -141,11 +157,11 @@ def run(input_path: Path, output_path: Path) -> dict:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", required=True)
-    parser.add_argument("--output")
+    parser.add_argument("--output")\n    parser.add_argument("--previous-input", help="Normalized prior NSE trading-session F&O report for legacy rows without previous close")
     args = parser.parse_args()
     source = Path(args.input)
     output = Path(args.output or f"data/analysis/{source.parent.name}/futures_buildup_intelligence.json")
-    result = run(source, output)
+    result = run(source, output, Path(args.previous_input) if args.previous_input else None)
     print(json.dumps({
         "status": result["status"], "trading_date": result["trading_date"],
         "source_rows": result["source_rows"],
