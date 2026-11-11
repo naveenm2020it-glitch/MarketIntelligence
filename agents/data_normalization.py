@@ -47,7 +47,7 @@ def read_report(path: Path, report: str) -> dict:
         records.append({k: v.strip() for k, v in zip(keys, row) if k})
     if not records:
         raise ValueError(f"{report}: no data rows")
-    dates = sorted({v for r in records if (v := r.get("TRADDT", ""))})
+    dates = sorted({v for r in records if (v := (r.get("TRADDT") or r.get("DATE1") or ""))})
     return {"report": report, "source_file": path.name, "header_row": header_i+1,
             "columns": keys, "row_count": len(records), "trading_dates": dates,
             "records": records}
@@ -56,6 +56,9 @@ def normalize_day(root: Path, output: Path, date: str) -> dict:
     for report in REPORTS:
         folder = root / date / report
         candidates = sorted(folder.glob("*.csv")) if folder.exists() else []
+        if not candidates:
+            raw_folder = Path("data/raw") / date / report
+            candidates = sorted(raw_folder.glob("*.csv")) if raw_folder.exists() else []
         if not candidates:
             failures[report] = f"No extracted CSV found under {folder}"
             continue
