@@ -20,6 +20,13 @@ ALIASES = {
 def norm_col(value: str) -> str:
     raw = value.strip().upper()
     return ALIASES.get(raw, re.sub(r"[^A-Z0-9]", "", raw))
+def iso_date(value: str) -> str:
+    value = value.strip()
+    for fmt in ("%d-%b-%Y", "%d-%B-%Y", "%Y-%m-%d", "%d/%m/%Y"):
+        try: return datetime.strptime(value[:10], fmt).date().isoformat()
+        except ValueError: pass
+    return value
+
 def read_report(path: Path, report: str) -> dict:
     if report not in REPORTS:
         raise ValueError(f"Unknown report type: {report}")
@@ -47,7 +54,7 @@ def read_report(path: Path, report: str) -> dict:
         records.append({k: v.strip() for k, v in zip(keys, row) if k})
     if not records:
         raise ValueError(f"{report}: no data rows")
-    dates = sorted({v for r in records if (v := (r.get("TRADDT") or r.get("DATE1") or ""))})
+    dates = sorted({iso_date(v) for r in records if (v := (r.get("TRADDT") or r.get("DATE1") or ""))})
     return {"report": report, "source_file": path.name, "header_row": header_i+1,
             "columns": keys, "row_count": len(records), "trading_dates": dates,
             "records": records}
