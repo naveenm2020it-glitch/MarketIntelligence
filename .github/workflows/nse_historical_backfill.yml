@@ -1,0 +1,65 @@
+name: NSE Historical EOD Backfill and Agent Replay
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'downloader/nse_historical_backfill.py'
+      - '.github/workflows/nse_historical_backfill.yml'
+  workflow_dispatch:
+    inputs:
+      start_date:
+        description: 'Start date inclusive (YYYY-MM-DD)'
+        required: false
+        default: '2026-07-01'
+      end_date:
+        description: 'End date inclusive (YYYY-MM-DD)'
+        required: false
+        default: '2026-11-10'
+permissions:
+  contents: write
+concurrency:
+  group: nse-historical-backfill
+  cancel-in-progress: false
+jobs:
+  historical-backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      START_DATE: ${{ inputs.start_date || '2026-07-01' }}
+      END_DATE: ${{ inputs.end_date || '2026-11-10' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Download historical NSE reports and replay Agents 2–6 chronologically
+        run: python downloader/nse_historical_backfill.py --start-date "$START_DATE" --end-date "$END_DATE" --minimum-samples 30
+      - name: Persist historical Agent 6 and compact NIFTY futures snapshots
+        if: always() && hashFiles('data/analysis/*/eod_market_confluence_intelligence.json') != ''
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/analysis/ data/backfill/
+          if ! git diff --cached --quiet; then
+            git commit -m "data: backfill historical NSE EOD agent snapshots"
+            git pull --rebase origin main
+            git push
+          else
+            echo "No historical snapshots to persist."
+          fi
+      - name: Upload raw NSE archive, normalized reports and validation output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nse-historical-backfill-${{ github.run_number }}
+          path: |
+            data/raw/
+            data/extracted/
+            data/normalized/
+            data/analysis/
+            data/backfill/
+          if-no-files-found: warn
+          retention-days: 30
