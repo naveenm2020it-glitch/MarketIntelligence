@@ -22,8 +22,10 @@ def norm_col(value: str) -> str:
     return ALIASES.get(raw, re.sub(r"[^A-Z0-9]", "", raw))
 def iso_date(value: str) -> str:
     value = value.strip()
-    for fmt in ("%d-%b-%Y", "%d-%B-%Y", "%Y-%m-%d", "%d/%m/%Y"):
-        try: return datetime.strptime(value[:10], fmt).date().isoformat()
+    token = value.split()[0] if value else ""
+    for candidate, fmt in ((token, "%d-%b-%Y"), (token, "%d-%B-%Y"),
+                           (token[:10], "%Y-%m-%d"), (token, "%d/%m/%Y")):
+        try: return datetime.strptime(candidate, fmt).date().isoformat()
         except ValueError: pass
     return value
 
