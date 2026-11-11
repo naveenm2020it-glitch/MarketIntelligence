@@ -13,7 +13,7 @@ on:
       - '.github/workflows/agent_tests.yml'
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
 jobs:
   unit-tests:
     runs-on: ubuntu-latest
@@ -42,6 +42,17 @@ jobs:
           python agents/data_normalization.py --date "$DATE"
       - name: Run Agent 2 — FII/DII Participant OI Intelligence
         run: python agents/participant_oi_intelligence.py --input "data/normalized/$(TZ=Asia/Kolkata date +%Y-%m-%d)/normalized.json"
+      - name: Persist Agent 2 daily snapshot for next-session comparison
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/analysis/
+          if ! git diff --cached --quiet; then
+            git commit -m "data: persist daily participant OI intelligence snapshot"
+            git push
+          else
+            echo "No new Agent 2 snapshot to persist."
+          fi
       - name: Upload normalized output
         if: always()
         uses: actions/upload-artifact@v4
