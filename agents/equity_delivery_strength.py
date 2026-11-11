@@ -23,6 +23,9 @@ def build_rows(payload):
     out=[]
     for symbol,r in dl.items():
         e=eq.get(symbol,{})
+        # The delivery report also includes non-equity instruments (for example GS series).
+        # Stock ranking is restricted to the EQ series to avoid mixing unlike instruments.
+        if str(r.get("SERIES","")).strip().upper() != "EQ": continue
         qty,pct=num(r.get("DELIVQTY")),num(r.get("DELIVPER"))
         if qty is None or pct is None or qty<0 or not 0<=pct<=100: continue
         close=num(r.get("CLOSEPRICE") or e.get("CLSPRIC"))
