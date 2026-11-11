@@ -105,7 +105,7 @@ def download_one(session: requests.Session, key: str, item: dict[str, str]) -> d
             raise ValueError(f"{key}: received HTML/access-denied page instead of report")
         target.write_bytes(payload)
     sha = hashlib.sha256(payload).hexdigest()
-    result = {"key": key, "file": str(target), "bytes": len(payload), "sha256": sha, "url": item["url"], "duplicate": target.exists() and len(payload) > 0}
+    result = {"key": key, "file": str(target), "bytes": len(payload), "sha256": sha, "url": item["url"], "duplicate": duplicate}
     if filename.lower().endswith(".zip"):
         with zipfile.ZipFile(target) as zf:
             bad = zf.testzip()
