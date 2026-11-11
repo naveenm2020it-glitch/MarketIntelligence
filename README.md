@@ -86,3 +86,8 @@ Uses only FUTIDX and FUTSTK contracts from the normalized NSE F&O UDiFF Bhavcopy
 ## Agent 5: NIFTY Option OI Support, Resistance and Max Pain
 
 Uses only the NIFTY option contracts in the normalized NSE F&O UDiFF report. Contracts are grouped separately by expiry and strike. Put OI (then change in Put OI) ranks potential support zones; Call OI (then change in Call OI) ranks potential resistance zones. Max Pain is calculated independently for each expiry by minimizing aggregate intrinsic-value payout across observed strikes. Non-NIFTY options and futures are excluded. This is EOD descriptive analysis, not live option-chain data, a guaranteed support/resistance level, or a price forecast.
+
+
+## Agent 6: EOD Market Direction and Confluence Intelligence
+
+Consumes only the persisted EOD outputs from Agents 2-5. It keeps FII and DII positioning separate, uses NIFTY FUTIDX (not stock futures) for index-futures confirmation, compares top Put OI support with top Call OI resistance for the nearest listed expiry, and derives equity delivery breadth only from matched stock price/delivery rows. A weighted, signed evidence score is normalized over available inputs; missing inputs reduce coverage and confidence rather than being imputed. The output is a rule-based bullish/bearish/neutral-or-mixed EOD assessment, not a calibrated probability, intraday signal, or standalone trade recommendation. Chronological walk-forward backtesting is required before making any accuracy claim.
