@@ -48,6 +48,8 @@ jobs:
         run: python agents/futures_buildup_intelligence.py --input "data/normalized/$(TZ=Asia/Kolkata date +%Y-%m-%d)/normalized.json"
       - name: Run Agent 5 — NIFTY Option OI Support Resistance and Max Pain
         run: python agents/nifty_option_oi_intelligence.py --input "data/normalized/$(TZ=Asia/Kolkata date +%Y-%m-%d)/normalized.json"
+      - name: Run Agent 6 — EOD Market Direction and Confluence Intelligence
+        run: python agents/eod_market_confluence_intelligence.py --date "$(TZ=Asia/Kolkata date +%Y-%m-%d)" --analysis-root data/analysis
       - name: Persist Agent analysis snapshots
         run: |
           git config user.name "github-actions[bot]"
