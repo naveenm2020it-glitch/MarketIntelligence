@@ -108,49 +108,19 @@ def find_report(entries: list[dict], report_key: str) -> dict:
     return matches[0][1]
 
 def validate_csv(path: Path, report_key: str) -> dict:
-    with path.open("r", encoding="utf-8-sig", errors="replace", newline="") as handle:
-        rows = list(csv.reader(handle))
-    if not rows:
-        raise ValueError(f"{report_key}: CSV is empty: {path}")
-
-    # NSE participant OI files begin with a report-title row; the actual
-    # column names are on the following row. Locate a real header explicitly.
-    header_index = None
-    header_markers = {"TRADDT", "SYMBOL", "CLIENT TYPE"}
-    for index, row in enumerate(rows[:12]):
-        if row and row[0].strip().upper() in header_markers:
-            header_index = index
-            break
-    if header_index is None:
-        raise ValueError(f"{report_key}: could not locate a recognized CSV header in first 12 rows: {path}")
-
-    header = [cell.strip() for cell in rows[header_index]]
-    if len([col for col in header if col]) < 2:
-        raise ValueError(f"{report_key}: invalid CSV header in {path}")
-    data_rows = sum(1 for row in rows[header_index + 1:] if any(cell.strip() for cell in row))
-    if data_rows < 1:
-        raise ValueError(f"{report_key}: CSV contains no data rows after header: {path}")
-
-    # Minimum schema checks prevent a report-title row or unrelated CSV from
-    # passing merely because it has comma-separated text.
-    normalized = {col.upper().replace(" ", "").replace("_", "") for col in header}
-    required = {
-        "equity_udiff": {"TRADDT", "TCKRSYMB", "CLSPRIC"},
-        "fo_udiff": {"TRADDT", "TCKRSYMB", "CLSPRIC"},
-        "participant_oi": {"CLIENTTYPE", "FUTUREINDEXLONG", "TOTALSHORTCONTRACTS"},
-        "security_delivery": {"SYMBOL", "DELIVQTY", "DELIVPER"},
-    }[report_key]
-    if not required.issubset(normalized):
-        raise ValueError(f"{report_key}: required columns missing; found {sorted(normalized)}")
-
-    logging.info("CSV validation passed: %s; columns=%d; rows=%d; header_row=%d",
-                 path, len(header), data_rows, header_index + 1)
+    # Use the same report-aware parser as normalization so legacy and UDiFF
+    # files are validated against one canonical header contract.
+    from agents.data_normalization import read_report
+    parsed = read_report(path, report_key)
+    logging.info("CSV validation passed: %s; rows=%d; header_row=%d",
+                 path, parsed["row_count"], parsed["header_row"])
     return {
         "csv": str(path),
-        "columns": len(header),
-        "data_rows": data_rows,
-        "header_row": header_index + 1,
-        "header": header,
+        "columns": len(parsed["columns"]),
+        "data_rows": parsed["row_count"],
+        "header_row": parsed["header_row"],
+        "header": parsed["columns"],
+        "trading_dates": parsed["trading_dates"],
     }
 
 def record_history(report_key: str, item: dict, result: dict) -> bool:
