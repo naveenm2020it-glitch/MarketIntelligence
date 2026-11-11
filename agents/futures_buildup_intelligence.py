@@ -79,7 +79,8 @@ def analyze(files: list[dict], previous_files: list[dict] | None = None) -> dict
         expiry = str(row.get("XPRYDT") or row.get("EXPIRYDT") or "").strip()
         close = first_num(row, "CLSPRIC", "CLOSEPRICE")
         previous_close = first_num(row, "PRVSCLSGPRIC", "PREVCLOSE", "PREVIOUSCLOSE")
-        previous_close_source = "current_report" if previous_close is not None else None\n        if previous_close is None:\n            previous_close = previous_closes.get(contract_key(row))\n            if previous_close is not None:\n                previous_close_source = "previous_session_same_contract_close"
+        previous_close_source = "current_report" if previous_close is not None else None
+        if previous_close is None:\n            previous_close = previous_closes.get(contract_key(row))\n            if previous_close is not None:\n                previous_close_source = "previous_session_same_contract_close"
         oi = first_num(row, "OPNINTRST", "OPENINTEREST")
         oi_change = first_num(row, "CHNGINOPNINTRST", "CHANGEINOPENINTEREST", "CHNGINOPNINT")
         if not symbol or close is None or previous_close is None or oi_change is None:
@@ -163,7 +164,7 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", required=True)
     parser.add_argument("--output")
-    parser.add_argument("--previous-input", help="Normalized prior NSE trading-session F&O report for legacy rows without previous close")\n    parser.add_argument("--previous-input", help="Normalized prior NSE trading-session F&O report for legacy rows without previous close")
+    parser.add_argument("--previous-input", help="Normalized prior NSE trading-session F&O report for legacy rows without previous close")
     args = parser.parse_args()
     source = Path(args.input)
     output = Path(args.output or f"data/analysis/{source.parent.name}/futures_buildup_intelligence.json")
