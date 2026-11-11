@@ -40,9 +40,9 @@ def participant_signal(data: dict | None) -> dict:
         vals=[p.get("index_futures_net_long"),p.get("index_options_directional_net")]
         known=[v for v in vals if isinstance(v,(int,float))]
         evidence[name]=sign_label(sum(known)/len(known) if known else None)
-    known=[v for v in evidence.values() if v in ("bullish","bearish")]
+    known=[v for v in evidence.values() if v in ("bullish","bearish","mixed")]
     if not known: direction="unavailable"
-    elif len(known)==2 and known[0]!=known[1]: direction="mixed"
+    elif "mixed" in known or ("bullish" in known and "bearish" in known): direction="mixed"
     else: direction=known[0]
     return {"direction":direction,"available":direction!="unavailable","evidence":evidence,
             "note":"FII and DII are shown separately; participant counterpart positions are not summed."}
@@ -68,17 +68,15 @@ def options_signal(data: dict | None) -> dict:
     # Use the nearest listed expiry only; do not combine expiry OI.
     expiry=sorted(expiries,key=lambda x:str(x.get("expiry","9999")))[0]
     supports=expiry.get("support_levels",[]); resistances=expiry.get("resistance_levels",[])
-    put=float(supports[0].get("put_oi",0)) if supports else 0.0
-    call=float(resistances[0].get("call_oi",0)) if resistances else 0.0
-    if not supports or not resistances or (put==0 and call==0): direction="unavailable"
-    elif put>call: direction="bullish"
-    elif call>put: direction="bearish"
-    else: direction="neutral"
-    return {"direction":direction,"available":direction!="unavailable",
-            "evidence":{"expiry":expiry.get("expiry"),"highest_put_oi_support":supports[0] if supports else None,
+    # OI concentrations identify positioning zones, not directional sentiment.
+    # Comparing largest Put OI and Call OI values across different strikes
+    # is not a valid standalone bullish/bearish test.
+    return {"direction":"unavailable","available":False,
+            "evidence":{"expiry":expiry.get("expiry"),
+                        "highest_put_oi_support":supports[0] if supports else None,
                         "highest_call_oi_resistance":resistances[0] if resistances else None,
                         "max_pain":expiry.get("max_pain")},
-            "note":"Compares top Put OI with top Call OI for the nearest listed expiry; descriptive only."}
+            "note":"Nearest-expiry Put/Call OI is retained as descriptive support/resistance evidence only; it is not converted into a directional signal."}
 
 def delivery_signal(data: dict | None) -> dict:
     if not data: return {"direction":"unavailable","available":False,"evidence":{}}
@@ -98,7 +96,8 @@ def combine(signals: dict) -> dict:
     score=0.0; used=0; evidence={}
     for key,weight in weights.items():
         sig=signals[key]; d=sig.get("direction")
-        if d not in ("bullish","bearish","neutral"): continue
+        if d not in ("bullish","bearish","neutral","mixed"): continue
+        # A mixed signal is available evidence with zero directional contribution.
         score += weight * (1 if d=="bullish" else -1 if d=="bearish" else 0)
         used += weight
         evidence[key]={"direction":d,"weight":weight}
