@@ -49,7 +49,8 @@ jobs:
           git add data/analysis/
           if ! git diff --cached --quiet; then
             git commit -m "data: persist daily participant OI intelligence snapshot"
-            git push
+            git pull --rebase origin main
+          git push
           else
             echo "No new Agent 2 snapshot to persist."
           fi
