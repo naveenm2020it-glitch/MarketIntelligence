@@ -3,6 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from agents.data_normalization import read_report, normalize_day
+from agents.futures_buildup_intelligence import analyze as analyze_futures
 
 class NormalizationTests(unittest.TestCase):
     def write(self, path, rows):
@@ -46,6 +47,37 @@ class NormalizationTests(unittest.TestCase):
             self.assertEqual(row["CLSPRIC"],"9200")
             self.assertNotIn("PRVSCLSGPRIC",row)
             self.assertEqual(result["trading_dates"],["2020-04-13"])
+
+    def test_legacy_fo_row_is_accepted_by_agent4_without_formula_change(self):
+        with tempfile.TemporaryDirectory() as d:
+            p=Path(d)/"fo13APR2020bhav.csv"
+            self.write(p,[["INSTRUMENT","SYMBOL","EXPIRY_DT","CLOSE","PREV_CLOSE","OPEN_INT","CHG_IN_OI","TIMESTAMP"],
+                          ["FUTIDX","NIFTY","30-APR-2020","9200","9100","12000","500","13-APR-2020"]])
+            parsed=read_report(p,"fo_udiff")
+            result=analyze_futures([parsed])
+            self.assertEqual(result["valid_future_contracts"],1)
+            self.assertEqual(result["contracts"][0]["symbol"],"NIFTY")
+            self.assertEqual(result["contracts"][0]["previous_close"],9100.0)
+            self.assertEqual(result["contracts"][0]["price_change"],100.0)
+            self.assertEqual(result["contracts"][0]["classification"],"long_buildup")
+
+    def test_participant_trade_date_is_normalized_and_checked(self):
+        with tempfile.TemporaryDirectory() as d:
+            p=Path(d)/"participant.csv"
+            self.write(p,[["trade_date","client_type","future_index_long","total_short_contracts"],
+                          ["2026-11-09","FII","100","50"]])
+            result=read_report(p,"participant_oi")
+            self.assertEqual(result["trading_dates"],["2026-11-09"])
+            self.assertEqual(result["records"][0]["TRADDT"],"2026-11-09")
+
+    def test_security_delivery_real_archive_headers_and_date(self):
+        with tempfile.TemporaryDirectory() as d:
+            p=Path(d)/"sec_bhavdata_full_05012024.csv"
+            self.write(p,[["SYMBOL"," SERIES"," DATE1"," PREV_CLOSE"," OPEN_PRICE"," HIGH_PRICE"," LOW_PRICE"," LAST_PRICE"," CLOSE_PRICE"," AVG_PRICE"," TTL_TRD_QNTY"," TURNOVER_LACS"," NO_OF_TRADES"," DELIV_QTY"," DELIV_PER"],
+                          ["20MICRONS","EQ","05-Jan-2024","175.70","175.00","178.65","173.50","175.00","175.25","175.81","92831","163.20","4962","54777","59.01"]])
+            result=read_report(p,"security_delivery")
+            self.assertEqual(result["trading_dates"],["2024-01-05"])
+            self.assertEqual(result["records"][0]["DELIVQTY"],"54777")
 
     def test_missing_required_header_fails(self):
         with tempfile.TemporaryDirectory() as d:
