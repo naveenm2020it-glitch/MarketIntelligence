@@ -7,7 +7,8 @@ from pathlib import Path
 from typing import Any
 
 NUMERIC = re.compile(r"^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$")
-FUTURE_TYPES = {"FUTIDX", "FUTSTK"}
+FUTURE_TYPES = {"FUTIDX", "FUTSTK", "IDF", "STF"}
+INSTRUMENT_CANONICAL = {"IDF": "FUTIDX", "STF": "FUTSTK", "FUTIDX": "FUTIDX", "FUTSTK": "FUTSTK"}
 
 def norm_key(value: Any) -> str:
     return re.sub(r"[^A-Z0-9]", "", str(value).upper())
@@ -57,6 +58,7 @@ def analyze(files: list[dict]) -> dict:
         if instrument not in FUTURE_TYPES:
             ignored_types[instrument or "missing"] += 1
             continue
+        canonical_instrument = INSTRUMENT_CANONICAL[instrument]
         symbol = str(row.get("TCKRSYMB") or row.get("SYMBOL") or "").strip().upper()
         expiry = str(row.get("XPRYDT") or row.get("EXPIRYDT") or "").strip()
         close = first_num(row, "CLSPRIC", "CLOSEPRICE")
@@ -69,7 +71,7 @@ def analyze(files: list[dict]) -> dict:
         price_change = close - previous_close
         price_change_pct = (price_change / previous_close * 100) if previous_close else None
         contracts.append({
-            "symbol": symbol, "instrument_type": instrument, "expiry": expiry or None,
+            "symbol": symbol, "instrument_type": canonical_instrument, "source_instrument_code": instrument, "expiry": expiry or None,
             "close_price": close, "previous_close": previous_close,
             "price_change": price_change,
             "price_change_percentage": price_change_pct,
@@ -107,6 +109,7 @@ def analyze(files: list[dict]) -> dict:
         "valid_future_contracts": len(contracts),
         "invalid_future_rows": invalid_rows,
         "ignored_instrument_types": dict(sorted(ignored_types.items())),
+        "source_instrument_mapping": {"IDF": "FUTIDX", "STF": "FUTSTK", "FUTIDX": "FUTIDX", "FUTSTK": "FUTSTK"},
     }
 
 def run(input_path: Path, output_path: Path) -> dict:
