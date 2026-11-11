@@ -4,9 +4,11 @@ on:
     branches: [main]
     paths:
       - 'agents/**'
+      - 'downloader/**'
       - 'tests/**'
       - '.github/workflows/agent_tests.yml'
       - '.github/workflows/nse_historical_backfill.yml'
+      - '.github/workflows/nse_five_date_pilot.yml'
   pull_request:
     paths:
       - 'agents/**'

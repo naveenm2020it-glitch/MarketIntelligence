@@ -25,6 +25,17 @@ class HistoricalUrlCompatibilityTests(unittest.TestCase):
         self.assertIn("BhavCopy_NSE_CM_0_0_0_20240708_F_0000.csv.zip", result["equity_udiff"])
         self.assertIn("BhavCopy_NSE_FO_0_0_0_20240708_F_0000.csv.zip", result["fo_udiff"])
 
+    def test_backfill_cli_exposes_exact_date_mode(self):
+        import subprocess
+        import sys
+        result = subprocess.run(
+            [sys.executable, "downloader/nse_historical_backfill.py", "--help"],
+            capture_output=True, text=True, check=True,
+        )
+        self.assertIn("--dates", result.stdout)
+        self.assertIn("--start-date", result.stdout)
+        self.assertIn("--end-date", result.stdout)
+
     def test_participant_and_delivery_names_remain_stable(self):
         result = urls(date(2020, 4, 13))
         self.assertTrue(result["participant_oi"].endswith("fao_participant_oi_13042020.csv"))
