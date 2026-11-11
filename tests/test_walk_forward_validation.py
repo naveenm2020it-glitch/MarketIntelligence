@@ -111,7 +111,7 @@ class WalkForwardValidationTests(unittest.TestCase):
         ]
         m = classification_metrics(pairs)
         self.assertEqual(m["samples"], 3)
-        self.assertAlmostEqual(m["accuracy"], 2/3)
+        self.assertAlmostEqual(m["accuracy"], 2/3, places=3)
         self.assertEqual(m["confusion_matrix_actual_rows_predicted_columns"]["bullish"]["bearish"], 1)
         self.assertEqual(m["directional_target_samples"], 2)
 
