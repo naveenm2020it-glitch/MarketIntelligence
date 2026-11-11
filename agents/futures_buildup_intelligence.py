@@ -81,7 +81,8 @@ def analyze(files: list[dict], previous_files: list[dict] | None = None) -> dict
         previous_close = first_num(row, "PRVSCLSGPRIC", "PREVCLOSE", "PREVIOUSCLOSE")
         previous_close_source = "current_report" if previous_close is not None else None
         if previous_close is None:
-            previous_close = previous_closes.get(contract_key(row))\n            if previous_close is not None:\n                previous_close_source = "previous_session_same_contract_close"
+            previous_close = previous_closes.get(contract_key(row))
+            if previous_close is not None:\n                previous_close_source = "previous_session_same_contract_close"
         oi = first_num(row, "OPNINTRST", "OPENINTEREST")
         oi_change = first_num(row, "CHNGINOPNINTRST", "CHANGEINOPENINTEREST", "CHNGINOPNINT")
         if not symbol or close is None or previous_close is None or oi_change is None:
