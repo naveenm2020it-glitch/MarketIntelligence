@@ -44,6 +44,8 @@ jobs:
         run: python agents/participant_oi_intelligence.py --input "data/normalized/$(TZ=Asia/Kolkata date +%Y-%m-%d)/normalized.json" --history-root data/analysis
       - name: Run Agent 3 — Equity Delivery Strength Intelligence
         run: python agents/equity_delivery_strength.py --input "data/normalized/$(TZ=Asia/Kolkata date +%Y-%m-%d)/normalized.json" --history-root data/analysis
+      - name: Run Agent 4 — Futures Buildup Intelligence
+        run: python agents/futures_buildup_intelligence.py --input "data/normalized/$(TZ=Asia/Kolkata date +%Y-%m-%d)/normalized.json"
       - name: Persist Agent 2 daily snapshot for next-session comparison
         run: |
           git config user.name "github-actions[bot]"
