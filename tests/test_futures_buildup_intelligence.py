@@ -46,6 +46,45 @@ class FuturesBuildupTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             analyze([{"records": [self.row("IDF", "NIFTY", "-", 210, 500)]}])
 
+    def test_legacy_contract_uses_previous_session_same_contract_close(self):
+        current = {
+            "records": [{
+                "INSTRUMENT": "FUTIDX", "SYMBOL": "NIFTY",
+                "EXPIRY_DT": "30-Apr-2020", "STRIKE_PR": "0", "OPTION_TYP": "XX",
+                "CLOSE": "19484.1", "OPEN_INT": "1084420", "CHG_IN_OI": "-45280"
+            }]
+        }
+        previous = {
+            "records": [{
+                "INSTRUMENT": "FUTIDX", "SYMBOL": "NIFTY",
+                "EXPIRY_DT": "30-Apr-2020", "STRIKE_PR": "0", "OPTION_TYP": "XX",
+                "CLOSE": "19300.0"
+            }]
+        }
+        result = analyze([current], [previous])
+        contract = result["contracts"][0]
+        self.assertEqual(contract["previous_close"], 19300.0)
+        self.assertEqual(contract["previous_close_source"], "previous_session_same_contract_close")
+        self.assertAlmostEqual(contract["price_change"], 184.1, places=6)
+
+    def test_prior_close_never_borrows_from_a_different_expiry(self):
+        current = {
+            "records": [{
+                "INSTRUMENT": "FUTIDX", "SYMBOL": "NIFTY",
+                "EXPIRY_DT": "30-Apr-2020", "STRIKE_PR": "0", "OPTION_TYP": "XX",
+                "CLOSE": "19484.1", "OPEN_INT": "1084420", "CHG_IN_OI": "-45280"
+            }]
+        }
+        previous = {
+            "records": [{
+                "INSTRUMENT": "FUTIDX", "SYMBOL": "NIFTY",
+                "EXPIRY_DT": "28-May-2020", "STRIKE_PR": "0", "OPTION_TYP": "XX",
+                "CLOSE": "19300.0"
+            }]
+        }
+        with self.assertRaises(ValueError):
+            analyze([current], [previous])
+
     def test_run_requires_passed_normalization_and_writes_output(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
