@@ -1,0 +1,93 @@
+name: NSE Archive and Schedule Monitor
+
+on:
+  workflow_dispatch:
+    inputs:
+      check_mode:
+        description: "archive-only validates the current date archive; scheduled also requires today's scheduled downloader run"
+        type: choice
+        options:
+          - archive-only
+          - scheduled
+        default: archive-only
+        required: true
+  schedule:
+    # 17:50 Asia/Kolkata, Monday-Friday; downloader is scheduled for 17:00 IST.
+    - cron: "20 12 * * 1-5"
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: nse-archive-monitor
+  cancel-in-progress: false
+
+jobs:
+  verify-daily-archive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check today's scheduled downloader run
+        if: ${{ github.event_name == 'schedule' || inputs.check_mode == 'scheduled' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          DATE="$(TZ=Asia/Kolkata date +%Y-%m-%d)"
+          gh api "repos/$GITHUB_REPOSITORY/actions/workflows/nse_downloader.yml/runs?event=schedule&per_page=30" > /tmp/runs.json
+          python - "$DATE" /tmp/runs.json <<'PY'
+          import json, sys
+          from datetime import datetime
+          from zoneinfo import ZoneInfo
+          date, path = sys.argv[1:]
+          data = json.load(open(path))
+          matches = []
+          for run in data.get("workflow_runs", []):
+              created = datetime.fromisoformat(run["created_at"].replace("Z", "+00:00")).astimezone(ZoneInfo("Asia/Kolkata"))
+              if created.date().isoformat() == date:
+                  matches.append(run)
+          if not matches:
+              raise SystemExit(f"No scheduled NSE downloader run found for {date} (IST).")
+          latest = max(matches, key=lambda r: r["created_at"])
+          print(f"Scheduled downloader run: {latest['html_url']}")
+          print(f"Status={latest['status']} conclusion={latest.get('conclusion')}")
+          if latest["status"] != "completed" or latest.get("conclusion") != "success":
+              raise SystemExit("Today's scheduled downloader run did not complete successfully.")
+          PY
+
+      - name: Download and verify today's permanent archive
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          DATE="$(TZ=Asia/Kolkata date +%Y-%m-%d)"
+          TAG="nse-data-$DATE"
+          mkdir -p /tmp/nse-archive
+          gh release view "$TAG" --json tagName,assets
+          gh release download "$TAG" --pattern "nse-market-data-$DATE.zip" --dir /tmp/nse-archive
+          unzip -t "/tmp/nse-archive/nse-market-data-$DATE.zip"
+          python - "$DATE" "/tmp/nse-archive/nse-market-data-$DATE.zip" <<'PY'
+          import sys, zipfile
+          from pathlib import Path
+          date, path = sys.argv[1:]
+          p = Path(path)
+          with zipfile.ZipFile(p) as z:
+              bad = z.testzip()
+              names = z.namelist()
+          if bad:
+              raise SystemExit(f"Corrupt member in archive: {bad}")
+          required = ["equity_udiff", "fo_udiff", "participant_oi", "security_delivery"]
+          summary = [n for n in names if n.endswith(f"nse_summary_{date}.json")]
+          if not summary:
+              raise SystemExit("Validation summary missing from permanent archive.")
+          print(f"Archive verified: {p.stat().st_size} bytes; {len(names)} members; summary={summary[0]}")
+          PY
+
+      - name: Write monitor result
+        if: always()
+        run: |
+          {
+            echo "## NSE archive monitor"
+            echo "- Date: $(TZ=Asia/Kolkata date +%Y-%m-%d) (Asia/Kolkata)"
+            echo "- Mode: ${{ github.event_name == 'schedule' && 'scheduled' || inputs.check_mode }}"
+            echo "- This job checks the daily downloader run (when scheduled mode is selected) and verifies the permanent ZIP archive."
+          } >> "$GITHUB_STEP_SUMMARY"
