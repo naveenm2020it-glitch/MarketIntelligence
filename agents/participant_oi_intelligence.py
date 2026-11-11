@@ -95,24 +95,36 @@ def bias(value: float | None) -> str:
     return "balanced"
 
 def overall_assessment(participants: dict) -> dict:
-    # Aggregate only comparable participant index-futures and index-options net values.
-    futures = [v["index_futures_net_long"] for v in participants.values()
-               if v.get("index_futures_net_long") is not None]
-    options = [v["index_options_directional_net"] for v in participants.values()
-               if v.get("index_options_directional_net") is not None]
-    f_total = sum(futures) if futures else None
-    o_total = sum(options) if options else None
-    if f_total is not None and o_total is not None:
-        label = "bullish" if f_total > 0 and o_total > 0 else "bearish" if f_total < 0 and o_total < 0 else "mixed"
-    elif f_total is not None:
-        label = "bullish" if f_total > 0 else "bearish" if f_total < 0 else "neutral"
-    elif o_total is not None:
-        label = "bullish" if o_total > 0 else "bearish" if o_total < 0 else "neutral"
-    else:
+    # Participant positions are counterparties and largely offset; summing them
+    # would create a misleading market-wide net near zero. Classify each group,
+    # then describe whether the participant groups agree or diverge.
+    group_bias = {}
+    for name, values in participants.items():
+        futures = values.get("index_futures_net_long")
+        options = values.get("index_options_directional_net")
+        signs = [1 if x > 0 else -1 if x < 0 else 0 for x in (futures, options) if x is not None]
+        if not signs:
+            group_bias[name] = "unavailable"
+        elif all(x > 0 for x in signs):
+            group_bias[name] = "bullish"
+        elif all(x < 0 for x in signs):
+            group_bias[name] = "bearish"
+        else:
+            group_bias[name] = "mixed"
+    available = [v for v in group_bias.values() if v != "unavailable"]
+    if not available:
         label = "insufficient_data"
-    return {"classification": label, "index_futures_net_total": f_total,
-            "index_options_directional_net_total": o_total,
-            "method": "Sign agreement of summed participant index-futures and directional index-options net positions; mixed when signs disagree."}
+    elif all(v == "bullish" for v in available):
+        label = "bullish_consensus"
+    elif all(v == "bearish" for v in available):
+        label = "bearish_consensus"
+    else:
+        label = "mixed_participant_positioning"
+    return {
+        "classification": label,
+        "participant_bias": group_bias,
+        "method": "Classifies each participant group from its own index-futures and directional index-options net positions; reports consensus only when all available groups agree. Participant totals are not added because counterpart positions offset."
+    }
 
 def load_normalized(path: Path) -> dict:
     payload = json.loads(path.read_text(encoding="utf-8"))
