@@ -40,6 +40,8 @@ jobs:
         run: |
           DATE="$(TZ=Asia/Kolkata date +%Y-%m-%d)"
           python agents/data_normalization.py --date "$DATE"
+      - name: Run Agent 2 — FII/DII Participant OI Intelligence
+        run: python agents/participant_oi_intelligence.py --input "data/normalized/$(TZ=Asia/Kolkata date +%Y-%m-%d)/normalized.json"
       - name: Upload normalized output
         if: always()
         uses: actions/upload-artifact@v4
