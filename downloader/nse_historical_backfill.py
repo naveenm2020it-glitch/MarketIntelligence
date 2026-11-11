@@ -135,27 +135,50 @@ def compact_snapshots(day: str) -> None:
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument('--start-date', required=True, help='YYYY-MM-DD inclusive')
-    ap.add_argument('--end-date', required=True, help='YYYY-MM-DD inclusive')
+    date_mode = ap.add_mutually_exclusive_group(required=True)
+    date_mode.add_argument('--dates', help='Comma-separated exact trading dates (YYYY-MM-DD); use for bounded pilot runs')
+    date_mode.add_argument('--start-date', help='YYYY-MM-DD inclusive; use with --end-date for continuous backfills')
+    ap.add_argument('--end-date', help='YYYY-MM-DD inclusive; required with --start-date')
     ap.add_argument('--minimum-samples', type=int, default=30)
     args = ap.parse_args()
-    start, end = date.fromisoformat(args.start_date), date.fromisoformat(args.end_date)
-    if end < start: ap.error('end-date must be on or after start-date')
+    if args.dates:
+        try:
+            selected_days = sorted({date.fromisoformat(x.strip()) for x in args.dates.split(',') if x.strip()})
+        except ValueError as exc:
+            ap.error(f'invalid --dates value: {exc}')
+        if not selected_days:
+            ap.error('--dates must contain at least one date')
+        if len(selected_days) > 10:
+            ap.error('--dates accepts at most 10 dates per bounded pilot run')
+        if any(x.weekday() >= 5 for x in selected_days):
+            ap.error('--dates contains a weekend date; supply NSE trading dates only')
+        start_label, end_label = selected_days[0].isoformat(), selected_days[-1].isoformat()
+    else:
+        if not args.end_date:
+            ap.error('--end-date is required with --start-date')
+        start, end = date.fromisoformat(args.start_date), date.fromisoformat(args.end_date)
+        if end < start: ap.error('end-date must be on or after start-date')
+        selected_days = []
+        current = start
+        while current <= end:
+            if current.weekday() < 5:
+                selected_days.append(current)
+            current += timedelta(days=1)
+        start_label, end_label = args.start_date, args.end_date
     session = make_session()
-    summary = {'source': 'NSE public historical archives', 'start_date': args.start_date,
-               'end_date': args.end_date, 'trading_days_attempted': 0, 'passed_days': [],
+    summary = {'source': 'NSE public historical archives', 'mode': 'exact_dates' if args.dates else 'date_range',
+               'requested_dates': [x.isoformat() for x in selected_days],
+               'start_date': start_label, 'end_date': end_label,
+               'trading_days_attempted': 0, 'passed_days': [],
                'skipped_or_failed_days': [], 'results': []}
-    current = start
-    while current <= end:
-        if current.weekday() < 5:
-            summary['trading_days_attempted'] += 1
-            item = process_day(current, session)
-            summary['results'].append(item)
-            if item['status'] == 'passed':
-                summary['passed_days'].append(current.isoformat())
-            else:
-                summary['skipped_or_failed_days'].append({'date': current.isoformat(), 'reason': item.get('error', 'unknown')})
-        current += timedelta(days=1)
+    for current in selected_days:
+        summary['trading_days_attempted'] += 1
+        item = process_day(current, session)
+        summary['results'].append(item)
+        if item['status'] == 'passed':
+            summary['passed_days'].append(current.isoformat())
+        else:
+            summary['skipped_or_failed_days'].append({'date': current.isoformat(), 'reason': item.get('error', 'unknown')})
     for daystr in summary['passed_days']: compact_snapshots(daystr)
     if summary['passed_days']:
         run_agent([sys.executable, 'agents/walk_forward_validation.py', '--analysis-root', 'data/analysis',
