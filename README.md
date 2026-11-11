@@ -71,3 +71,8 @@ The workflow uploads to `nse-market-data/YYYY-MM-DD/nse-market-data-YYYY-MM-DD.z
 ## Agent 2: FII/DII Participant OI Intelligence
 
 Consumes only the normalized NSE Participant-wise Open Interest report. It reports FII, DII, Client and Proprietary positions where present; computes index-futures net long/short and a transparent directional index-options net; and compares with the latest earlier valid normalized trading day when available. Missing columns stay unavailable. The output is EOD descriptive intelligence, not intraday flow or a standalone trade recommendation. Historical accuracy is not claimed.
+
+
+## Agent 3: Equity Delivery Strength Intelligence
+
+Uses the NSE Equity UDiFF Bhavcopy and Security-wise Delivery report to join symbols, rank delivery percentage and quantity, compare each stock with the current universe median, and calculate price change when source fields are available. Daily EOD snapshots support next-session comparisons. High delivery percentage alone does not prove accumulation or institutional buying.
