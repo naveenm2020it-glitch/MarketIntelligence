@@ -10,7 +10,7 @@ on:
     - cron: "30 11 * * 1-5"
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: nse-daily-downloader
@@ -35,6 +35,19 @@ jobs:
 
       - name: Download official NSE reports and validate files
         run: python downloader/nse_downloader.py
+
+      - name: Persist checksum-based report history
+        if: always() && hashFiles('data/history/manifest.json') != ''
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/history/manifest.json
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: update NSE report history manifest"
+            git push
+          else
+            echo "History manifest unchanged; no commit needed."
+          fi
 
       - name: Upload reports, extracted CSVs and logs
         if: always()
