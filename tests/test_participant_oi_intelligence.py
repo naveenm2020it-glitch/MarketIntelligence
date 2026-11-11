@@ -26,7 +26,28 @@ class ParticipantOIIntelligenceTests(unittest.TestCase):
             "FII":{"index_futures_net_long":10,"index_options_directional_net":-5}
         })
         self.assertEqual(assessment["classification"], "mixed")
-    def test_end_to_end_without_previous_day(self):
+
+    def test_comparison_uses_persisted_previous_agent_snapshot(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp); history=root/"normalized"
+            previous_dir=history/"2026-11-10"; previous_dir.mkdir(parents=True)
+            (previous_dir/"participant_oi_intelligence.json").write_text(json.dumps({
+                "agent":"participant_oi_intelligence","status":"passed",
+                "participants":{"FII":{"index_futures_net_long":20,"index_options_directional_net":5}}
+            }))
+            today=history/"2026-11-11"; today.mkdir(parents=True)
+            source=today/"normalized.json"
+            source.write_text(json.dumps({
+                "status":"passed","date_consistency":"passed","requested_date":"2026-11-11",
+                "observed_trading_dates":["2026-11-11"],
+                "reports":{"participant_oi":self.report([{
+                    "CLIENTTYPE":"FII","FUTUREINDEXLONG":"100","FUTUREINDEXSHORT":"70"
+                }])}
+            }))
+            result=run(source,root/"out.json",history)
+            self.assertEqual(result["comparison_date"],"2026-11-10")
+            self.assertEqual(result["participant_changes_vs_previous_day"]["FII"]["index_futures_net_long"],10)
+\n    def test_end_to_end_without_previous_day(self):
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp); day=root/"normalized"/"2026-11-11"
             day.mkdir(parents=True)
