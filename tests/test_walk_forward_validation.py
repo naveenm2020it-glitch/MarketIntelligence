@@ -177,6 +177,10 @@ class WalkForwardValidationTests(unittest.TestCase):
         # Predictions are prior observed actual labels: bullish, then bearish.
         self.assertAlmostEqual(baseline["metrics"]["accuracy"], 0.5)
         self.assertFalse(baseline["uses_current_target_for_prediction"])
+        matched = baseline["matched_agent6_comparison"]
+        self.assertTrue(matched["same_rows_as_baseline"])
+        self.assertEqual(matched["samples"], baseline["samples"])
+        self.assertAlmostEqual(matched["metrics"]["accuracy"], 0.5)
         self.assertEqual([x["period"] for x in result["chronological_periods"]],
                          ["early", "middle", "late"])
         audit = result["archive_and_contract_audit"]
