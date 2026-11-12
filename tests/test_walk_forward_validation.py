@@ -46,6 +46,19 @@ class WalkForwardValidationTests(unittest.TestCase):
             self.assertEqual(pairs[0]["nifty_futidx_expiry"], "2026-11-26")
             self.assertEqual(skipped, [])
 
+    def test_weekend_dated_snapshots_are_excluded_from_validation_pairs(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.write_day(root, "2026-11-06", "bullish", 25000)
+            self.write_day(root, "2026-11-08", "bearish", 26000)  # Sunday archive must be ignored
+            self.write_day(root, "2026-11-09", "bullish", 25100)
+            pairs, skipped = build_pairs(root, 10, 5)
+            self.assertEqual(len(pairs), 1)
+            self.assertEqual(pairs[0]["signal_date"], "2026-11-06")
+            self.assertEqual(pairs[0]["target_date"], "2026-11-09")
+            self.assertEqual(pairs[0]["calendar_gap_days"], 3)
+            self.assertEqual(skipped, [])
+
     def test_rollover_does_not_splice_different_expiries(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

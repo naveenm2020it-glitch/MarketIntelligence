@@ -25,6 +25,26 @@ class PreviousSessionContextTests(unittest.TestCase):
         normalize.assert_called_once()
         self.assertEqual(run_agent.call_count, 2)
 
+    def test_weekend_candidates_are_skipped_before_archive_fetch(self):
+        calls = []
+
+        def fake_fetch(session, candidate, key, url):
+            calls.append((candidate, key))
+            if candidate != date(2026, 11, 6):
+                raise AssertionError(f"Weekend or unexpected date requested: {candidate}")
+            return {"validation": "passed"}
+
+        with patch.object(backfill, "fetch_one", side_effect=fake_fetch), \
+             patch.object(backfill, "normalize_day") as normalize, \
+             patch.object(backfill, "run_agent") as run_agent:
+            found = backfill.prepare_previous_session_context(date(2026, 11, 9), object())
+
+        self.assertEqual(found, date(2026, 11, 6))
+        self.assertEqual(len(calls), 4)
+        self.assertEqual({day for day, _ in calls}, {date(2026, 11, 6)})
+        normalize.assert_called_once()
+        self.assertEqual(run_agent.call_count, 2)
+
     def test_returns_none_when_no_valid_prior_archive_exists(self):
         with patch.object(backfill, "fetch_one", side_effect=FileNotFoundError("missing")), \
              patch.object(backfill, "normalize_day") as normalize, \

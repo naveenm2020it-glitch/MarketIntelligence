@@ -79,8 +79,11 @@ def contract_map(snapshot: dict) -> dict[str, dict]:
 
 
 def build_pairs(root: Path, neutral_band_bps: float, max_gap_days: int) -> tuple[list[dict], list[dict]]:
+    # Exclude weekend-dated folders even if an archive URL returned a
+    # syntactically valid file. Such folders are not NSE sessions.
     dates = sorted(p.name for p in root.iterdir()
-                   if p.is_dir() and parse_day(p.name) is not None)
+                   if p.is_dir() and parse_day(p.name) is not None
+                   and parse_day(p.name).weekday() < 5)
     snapshots = {}
     for day in dates:
         a6 = valid_snapshot(root / day / AGENT6_FILE, "eod_market_confluence_intelligence", day)
