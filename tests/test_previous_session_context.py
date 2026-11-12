@@ -34,8 +34,8 @@ class PreviousSessionContextTests(unittest.TestCase):
                 raise AssertionError(f"Weekend or unexpected date requested: {candidate}")
             return {"validation": "passed"}
 
-        with patch.object(backfill, "fetch_one", side_effect=fake_fetch), \\
-             patch.object(backfill, "normalize_day") as normalize, \\
+        with patch.object(backfill, "fetch_one", side_effect=fake_fetch), \
+             patch.object(backfill, "normalize_day") as normalize, \
              patch.object(backfill, "run_agent") as run_agent:
             found = backfill.prepare_previous_session_context(date(2026, 11, 9), object())
 
