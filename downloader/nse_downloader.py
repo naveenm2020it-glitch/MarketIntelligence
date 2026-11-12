@@ -76,6 +76,10 @@ def parse_date(value: str) -> str:
             pass
     return value
 
+def report_storage_date(item: dict, fallback: str = TODAY) -> str:
+    """Use the NSE catalogue trading date for storage, never the runner calendar date."""
+    return parse_date(str(item.get("tradingDate", ""))) or fallback
+
 def collect_entries(payload):
     entries = []
     if isinstance(payload, dict):
@@ -173,7 +177,8 @@ def download_report(session: requests.Session, report_key: str, item: dict) -> d
     url = urljoin(file_path.rstrip("/") + "/", filename)
     # Preserve the actual NSE filename, not the sanitized local name, in the request.
     url = urljoin(file_path.rstrip("/") + "/", str(item["fileActlName"]))
-    folder = RAW / TODAY / report_key
+    report_date = report_storage_date(item)
+    folder = RAW / report_date / report_key
     folder.mkdir(parents=True, exist_ok=True)
     target = folder / filename
     local_reuse = target.exists() and target.stat().st_size > 0
@@ -193,6 +198,7 @@ def download_report(session: requests.Session, report_key: str, item: dict) -> d
         "report": report_key,
         "file_key": item.get("fileKey"),
         "trading_date": item.get("tradingDate"),
+        "trading_date_iso": report_date,
         "filename": str(item["fileActlName"]),
         "saved_as": str(target),
         "download_url": url,
@@ -210,7 +216,7 @@ def download_report(session: requests.Session, report_key: str, item: dict) -> d
             csv_members = [member for member in archive.namelist() if member.lower().endswith(".csv")]
             if not csv_members:
                 raise ValueError(f"{report_key}: ZIP has no CSV member")
-            out_dir = EXTRACTED / TODAY / report_key
+            out_dir = EXTRACTED / report_date / report_key
             out_dir.mkdir(parents=True, exist_ok=True)
             validations = []
             for member in csv_members:
