@@ -79,8 +79,8 @@ jobs:
               raise SystemExit(f"NSE reports disagree on trading date: {resolved}")
           trading_date = unique_dates[0]
           with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as env:
-              env.write(f"RUN_DATE={run_date}\\n")
-              env.write(f"TRADING_DATE={trading_date}\\n")
+              env.write("RUN_DATE=" + run_date + chr(10))
+              env.write("TRADING_DATE=" + trading_date + chr(10))
           print(f"Download folder date: {run_date}")
           print(f"Verified NSE report trading date: {trading_date}")
           PY
