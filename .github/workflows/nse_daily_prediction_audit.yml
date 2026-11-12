@@ -104,7 +104,7 @@ jobs:
       - name: Update permanent daily prediction audit
         if: steps.session.outputs.trading_date != ''
         run: |
-          python agents/daily_prediction_audit.py \
+          python -m agents.daily_prediction_audit \
             --analysis-root data/analysis \
             --validation-report data/backfill/walk_forward_validation.json \
             --output data/audit/daily_prediction_audit.json \
