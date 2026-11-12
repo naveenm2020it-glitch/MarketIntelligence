@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 
 from agents.walk_forward_validation import (
-    build_pairs, classification_metrics, contract_map, prediction_label, run,
+    build_pairs, chronological_diagnostics, classification_metrics, contract_map, prediction_label, run,
 )
 
 
@@ -148,6 +148,37 @@ class WalkForwardValidationTests(unittest.TestCase):
             a6_path.write_text(json.dumps(a6))
             with self.assertRaises(ValueError):
                 build_pairs(root, 10, 5)
+
+    def test_chronological_diagnostics_and_persistence_baseline(self):
+        pairs = [
+            {"signal_date":"2026-11-02","target_date":"2026-11-03","actual":"bullish",
+             "prediction":"bullish","calendar_gap_days":1,"nifty_futidx_expiry":"2026-11-26"},
+            {"signal_date":"2026-11-03","target_date":"2026-11-04","actual":"bearish",
+             "prediction":"bullish","calendar_gap_days":1,"nifty_futidx_expiry":"2026-11-26"},
+            {"signal_date":"2026-11-04","target_date":"2026-11-05","actual":"bearish",
+             "prediction":"bearish","calendar_gap_days":2,"nifty_futidx_expiry":"2026-12-31"},
+        ]
+        result = chronological_diagnostics(pairs)
+        baseline = result["persistence_baseline"]
+        self.assertEqual(baseline["samples"], 2)
+        # Predictions are prior observed actual labels: bullish, then bearish.
+        self.assertAlmostEqual(baseline["metrics"]["accuracy"], 0.5)
+        self.assertFalse(baseline["uses_current_target_for_prediction"])
+        self.assertEqual([x["period"] for x in result["chronological_periods"]],
+                         ["early", "middle", "late"])
+        audit = result["archive_and_contract_audit"]
+        self.assertEqual(audit["calendar_gap_days_max"], 2)
+        self.assertEqual(audit["common_expiry_sample_counts"],
+                         {"2026-11-26": 2, "2026-12-31": 1})
+
+    def test_persistence_baseline_excludes_first_pair(self):
+        pairs = [{
+            "signal_date":"2026-11-02","target_date":"2026-11-03","actual":"bullish",
+            "prediction":"bearish","calendar_gap_days":1,"nifty_futidx_expiry":"2026-11-26",
+        }]
+        result = chronological_diagnostics(pairs)
+        self.assertEqual(result["persistence_baseline"]["samples"], 0)
+        self.assertIsNone(result["persistence_baseline"]["metrics"]["accuracy"])
 
 
 if __name__ == "__main__":
