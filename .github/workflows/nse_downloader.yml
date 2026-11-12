@@ -81,27 +81,29 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          DATE="$(TZ=Asia/Kolkata date +%Y-%m-%d)"
-          SUMMARY="logs/nse_summary_${DATE}.json"
+          RUN_DATE="$(TZ=Asia/Kolkata date +%Y-%m-%d)"
+          SUMMARY="logs/nse_summary_${RUN_DATE}.json"
           if [ ! -f "$SUMMARY" ]; then
             echo "Expected NSE summary not found: $SUMMARY"
             exit 1
           fi
-          if ! python - "$SUMMARY" <<'PY'
+          DATE="$(python - "$SUMMARY" <<'PY'
           import json, sys
           from pathlib import Path
-          data = json.loads(Path(sys.argv[1]).read_text())
-          if data.get('failures') or data.get('missing_reports') or data.get('trading_date_consistency') != 'passed':
-              print('Permanent archive withheld: report set incomplete or dates inconsistent.')
-              print(json.dumps({'failures': data.get('failures'), 'missing_reports': data.get('missing_reports'), 'trading_date_consistency': data.get('trading_date_consistency')}, indent=2))
-              raise SystemExit(1)
-          print('All required NSE reports present and trading dates consistent.')
+          data = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+          expected = {"equity_udiff", "fo_udiff", "participant_oi", "security_delivery"}
+          dates = data.get("report_trading_dates", {})
+          if data.get("failures") or data.get("missing_reports") or data.get("trading_date_consistency") != "passed":
+              raise SystemExit("Permanent archive withheld: report set incomplete or dates inconsistent.")
+          if set(dates) != expected or len(set(dates.values())) != 1:
+              raise SystemExit(f"Expected four reports for one common NSE trading date; got {dates}")
+          print(next(iter(dates.values())))
           PY
-          then
-            echo "Skipping permanent archive because validation did not pass."
-            exit 0
-          fi
-          python - "$DATE" <<'PY'
+          )"
+          echo "NSE_TRADING_DATE=$DATE" >> "$GITHUB_ENV"
+          echo "NSE_COLLECTION_DATE=$RUN_DATE" >> "$GITHUB_ENV"
+          echo "Archiving verified NSE trading date $DATE (collected on $RUN_DATE)"
+          python - "$DATE" "$RUN_DATE" <<'PY'
           import sys, zipfile
           from pathlib import Path
           date = sys.argv[1]
@@ -111,7 +113,7 @@ jobs:
               for root in roots:
                   if root.exists():
                       for file in root.rglob("*"):
-                          if file.is_file() and (root.name != "logs" or date in file.name):
+                          if file.is_file() and (root.name != "logs" or sys.argv[2] in file.name):
                               z.write(file, file.as_posix())
           print(f"Created {archive} ({archive.stat().st_size} bytes)")
           PY
@@ -132,7 +134,7 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: us-east-1
         run: |
-          DATE="$(TZ=Asia/Kolkata date +%Y-%m-%d)"
+          DATE="$NSE_TRADING_DATE"
           ARCHIVE="nse-market-data-${DATE}.zip"
           if [ -z "$S3_ENDPOINT" ] || [ -z "$S3_BUCKET" ] || [ -z "$AWS_ACCESS_KEY_ID" ] || [ -z "$AWS_SECRET_ACCESS_KEY" ]; then
             echo "Independent S3 backup not configured: add S3_ENDPOINT, S3_BUCKET, S3_ACCESS_KEY_ID and S3_SECRET_ACCESS_KEY repository secrets."
