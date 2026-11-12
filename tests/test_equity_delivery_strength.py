@@ -37,6 +37,19 @@ class DeliveryTests(unittest.TestCase):
             self.assertIsNone(result["comparison_date"])
             self.assertIsNone(result["changes_vs_previous_day"])
 
+    def test_previous_session_with_long_weekend_gap_is_eligible(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d); old=root/"2026-11-05"; old.mkdir()
+            (old/"delivery_strength.json").write_text(json.dumps({
+                "agent":"equity_delivery_strength","status":"passed",
+                "stocks":[{"symbol":"AAA","delivery_percentage":55,"delivery_quantity":500}]
+            }))
+            payload=self.payload(); payload["requested_date"]="2026-11-11"
+            src=root/"normalized.json"; src.write_text(json.dumps(payload))
+            result=run(src,root/"out.json",root)
+            self.assertEqual(result["comparison_date"],"2026-11-05")
+            self.assertEqual(result["changes_vs_previous_day"]["AAA"]["delivery_percentage_change_pp"],5)
+
     def test_missing_report_fails_closed(self):
         p=self.payload(); del p["reports"]["security_delivery"]
         with tempfile.TemporaryDirectory() as d:
