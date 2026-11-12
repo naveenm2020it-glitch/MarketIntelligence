@@ -111,7 +111,57 @@
         },
         "by_agent6_confidence_grade": {}
       },
-      "note": "First pair has no prior observed target and is excluded. This is a simple baseline, not a trading strategy."
+      "matched_agent6_comparison": {
+        "samples": 0,
+        "metrics": {
+          "samples": 0,
+          "accuracy": null,
+          "balanced_accuracy": null,
+          "macro_f1": null,
+          "directional_target_samples": 0,
+          "directional_accuracy": null,
+          "confusion_matrix_actual_rows_predicted_columns": {
+            "bullish": {
+              "bullish": 0,
+              "bearish": 0,
+              "neutral": 0
+            },
+            "bearish": {
+              "bullish": 0,
+              "bearish": 0,
+              "neutral": 0
+            },
+            "neutral": {
+              "bullish": 0,
+              "bearish": 0,
+              "neutral": 0
+            }
+          },
+          "per_class": {
+            "bullish": {
+              "support": 0,
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1": 0.0
+            },
+            "bearish": {
+              "support": 0,
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1": 0.0
+            },
+            "neutral": {
+              "support": 0,
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1": 0.0
+            }
+          },
+          "by_agent6_confidence_grade": {}
+        },
+        "same_rows_as_baseline": true
+      },
+      "note": "First pair has no prior observed target and is excluded. Agent 6 comparison metrics above use the exact same rows as this baseline. This is a simple baseline, not a trading strategy."
     },
     "archive_and_contract_audit": {
       "sample_count": 0,
