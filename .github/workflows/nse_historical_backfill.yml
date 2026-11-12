@@ -37,7 +37,8 @@ jobs:
       - name: Install dependencies
         run: python -m pip install -r requirements.txt
       - name: Download historical NSE reports and replay Agents 2–6 chronologically
-        run: python downloader/nse_historical_backfill.py --start-date "$START_DATE" --end-date "$END_DATE" --minimum-samples 30 \
+        run: |
+          python downloader/nse_historical_backfill.py --start-date "$START_DATE" --end-date "$END_DATE" --minimum-samples 30 \
             --validation-output data/backfill/historical_walk_forward_validation.json
       - name: Require a valid two-year walk-forward result
         run: |
