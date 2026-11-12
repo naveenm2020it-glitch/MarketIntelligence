@@ -1,0 +1,62 @@
+{
+  "source": "NSE public historical archives",
+  "mode": "exact_dates",
+  "requested_dates": [
+    "2026-01-30"
+  ],
+  "start_date": "2026-01-30",
+  "end_date": "2026-01-30",
+  "trading_days_attempted": 1,
+  "passed_days": [
+    "2026-01-30"
+  ],
+  "skipped_or_failed_days": [],
+  "results": [
+    {
+      "date": "2026-01-30",
+      "reports": {
+        "equity_udiff": {
+          "report": "equity_udiff",
+          "url": "https://nsearchives.nseindia.com/content/cm/BhavCopy_NSE_CM_0_0_0_20260130_F_0000.csv.zip",
+          "bytes": 183505,
+          "saved_as": "data/raw/2026-01-30/equity_udiff/equity_udiff.zip",
+          "sha256": "1d5fb06c393e07f37a7b79e400b2a1dada05a71b4fecef6a245af300dd717386",
+          "validation": "passed",
+          "csv_files": 1,
+          "rows": 3262
+        },
+        "fo_udiff": {
+          "report": "fo_udiff",
+          "url": "https://nsearchives.nseindia.com/content/fo/BhavCopy_NSE_FO_0_0_0_20260130_F_0000.csv.zip",
+          "bytes": 1181033,
+          "saved_as": "data/raw/2026-01-30/fo_udiff/fo_udiff.zip",
+          "sha256": "f99c274aad1807bb8344452a8ef33d7f15568c78c9bc5496e39f90ae7544e48f",
+          "validation": "passed",
+          "csv_files": 1,
+          "rows": 38338
+        },
+        "participant_oi": {
+          "report": "participant_oi",
+          "url": "https://nsearchives.nseindia.com/content/nsccl/fao_participant_oi_30012026.csv",
+          "bytes": 959,
+          "saved_as": "data/raw/2026-01-30/participant_oi/participant_oi.csv",
+          "sha256": "97515fa50c3a71de934ef3d06a6413436561a1e346775993269fb5cc57be0c65",
+          "validation": "passed",
+          "csv_files": 1,
+          "rows": 5
+        },
+        "security_delivery": {
+          "report": "security_delivery",
+          "url": "https://nsearchives.nseindia.com/products/content/sec_bhavdata_full_30012026.csv",
+          "bytes": 353417,
+          "saved_as": "data/raw/2026-01-30/security_delivery/security_delivery.csv",
+          "sha256": "2ed37c0ab8179f5c56fd09fee56a4626feafad0204900252b2aba715742d99c7",
+          "validation": "passed",
+          "csv_files": 1,
+          "rows": 3103
+        }
+      },
+      "status": "passed"
+    }
+  ]
+}

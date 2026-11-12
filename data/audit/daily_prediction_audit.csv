@@ -1,0 +1,2 @@
+﻿signal_date,target_date,audit_status,prediction,actual,result,baseline_prediction,baseline_result,target_return_percent,nifty_futidx_expiry,signal_day_close,target_day_close,calendar_gap_days,agent6_confidence,agent6_confidence_score
+2026-11-11,,pending,bullish,,pending,,,,2026-11-23,25214.2,,,low,20

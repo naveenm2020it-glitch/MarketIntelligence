@@ -1,0 +1,187 @@
+{
+  "schema_version": 1,
+  "agent": "daily_prediction_audit",
+  "source": "Agent 7 persisted chronological NSE EOD evidence",
+  "generated_at_utc": "2026-11-12T06:31:18.621620+00:00",
+  "validation_status": "insufficient_data",
+  "validation_type": "chronological_next_archived_session_out_of_sample",
+  "target_definition": {
+    "instrument": "NIFTY FUTIDX",
+    "measure": "same-expiry futures close-to-close return from signal date to next available archived session",
+    "neutral_band_bps": 10.0,
+    "neutral_band_percent": 0.1,
+    "contract_rollover": "Only the nearest expiry common to both dates is compared; no cross-expiry splice.",
+    "not_cash_index": true
+  },
+  "records_count": 1,
+  "settled_count": 0,
+  "pending_count": 1,
+  "agent6_metrics_all_settled": {
+    "samples": 0,
+    "accuracy": null,
+    "balanced_accuracy": null,
+    "macro_f1": null,
+    "directional_target_samples": 0,
+    "directional_accuracy": null,
+    "confusion_matrix_actual_rows_predicted_columns": {
+      "bullish": {
+        "bullish": 0,
+        "bearish": 0,
+        "neutral": 0
+      },
+      "bearish": {
+        "bullish": 0,
+        "bearish": 0,
+        "neutral": 0
+      },
+      "neutral": {
+        "bullish": 0,
+        "bearish": 0,
+        "neutral": 0
+      }
+    },
+    "per_class": {
+      "bullish": {
+        "support": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "bearish": {
+        "support": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "neutral": {
+        "support": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      }
+    },
+    "by_agent6_confidence_grade": {}
+  },
+  "matched_comparison": {
+    "samples": 0,
+    "same_rows_for_both_methods": true,
+    "agent6": {
+      "samples": 0,
+      "accuracy": null,
+      "balanced_accuracy": null,
+      "macro_f1": null,
+      "directional_target_samples": 0,
+      "directional_accuracy": null,
+      "confusion_matrix_actual_rows_predicted_columns": {
+        "bullish": {
+          "bullish": 0,
+          "bearish": 0,
+          "neutral": 0
+        },
+        "bearish": {
+          "bullish": 0,
+          "bearish": 0,
+          "neutral": 0
+        },
+        "neutral": {
+          "bullish": 0,
+          "bearish": 0,
+          "neutral": 0
+        }
+      },
+      "per_class": {
+        "bullish": {
+          "support": 0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "bearish": {
+          "support": 0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "neutral": {
+          "support": 0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        }
+      },
+      "by_agent6_confidence_grade": {}
+    },
+    "persistence_baseline": {
+      "samples": 0,
+      "accuracy": null,
+      "balanced_accuracy": null,
+      "macro_f1": null,
+      "directional_target_samples": 0,
+      "directional_accuracy": null,
+      "confusion_matrix_actual_rows_predicted_columns": {
+        "bullish": {
+          "bullish": 0,
+          "bearish": 0,
+          "neutral": 0
+        },
+        "bearish": {
+          "bullish": 0,
+          "bearish": 0,
+          "neutral": 0
+        },
+        "neutral": {
+          "bullish": 0,
+          "bearish": 0,
+          "neutral": 0
+        }
+      },
+      "per_class": {
+        "bullish": {
+          "support": 0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "bearish": {
+          "support": 0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "neutral": {
+          "support": 0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        }
+      },
+      "by_agent6_confidence_grade": {}
+    }
+  },
+  "records": [
+    {
+      "signal_date": "2026-11-11",
+      "target_date": null,
+      "audit_status": "pending",
+      "prediction": "bullish",
+      "actual": null,
+      "result": "pending",
+      "baseline_prediction": null,
+      "baseline_result": null,
+      "target_return_percent": null,
+      "nifty_futidx_expiry": "2026-11-23",
+      "signal_day_close": 25214.2,
+      "target_day_close": null,
+      "calendar_gap_days": null,
+      "agent6_confidence": "low",
+      "agent6_confidence_score": 20
+    }
+  ],
+  "limitations": [
+    "Settled outcomes use same-expiry NIFTY FUTIDX close-to-close returns, not NIFTY 50 cash-index returns.",
+    "The latest EOD signal remains pending until a later valid archived session provides its actual outcome.",
+    "The persistence baseline uses only a previously completed pair and is omitted when no prior target was available.",
+    "This ledger evaluates existing Agent 6 rules; it does not train an ML model or establish intraday profitability.",
+    "Only validated NSE archive snapshots are included; unavailable dates are not fabricated."
+  ]
+}
