@@ -44,7 +44,12 @@ def previous_snapshot(root, day):
         if p.parent.name>=day: continue
         try:
             x=json.loads(p.read_text())
-            if x.get("agent")=="equity_delivery_strength" and x.get("status")=="passed": candidates.append((p.parent.name,p))
+            if x.get("agent")=="equity_delivery_strength" and x.get("status")=="passed":
+                # Do not compare widely separated pilot dates as if they were
+                # the previous trading session.
+                from datetime import date
+                gap=(date.fromisoformat(day)-date.fromisoformat(p.parent.name)).days
+                if 0 < gap <= 7: candidates.append((p.parent.name,p))
         except (OSError,json.JSONDecodeError): pass
     return sorted(candidates)[-1][1] if candidates else None
 def run(source, output, history):

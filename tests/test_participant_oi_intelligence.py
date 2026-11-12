@@ -72,4 +72,22 @@ class ParticipantOIIntelligenceTests(unittest.TestCase):
             self.assertIsNone(result["comparison_date"])
             self.assertTrue(output.exists())
 
+    def test_sparse_historical_pilot_date_does_not_use_year_old_snapshot(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp); old=root/"2020-04-13"; old.mkdir()
+            (old/"participant_oi_intelligence.json").write_text(json.dumps({
+                "agent":"participant_oi_intelligence","status":"passed",
+                "participants":{"FII":{"index_futures_net_long":20}}
+            }))
+            today=root/"2022-01-05"; today.mkdir()
+            source=today/"normalized.json"
+            source.write_text(json.dumps({
+                "status":"passed","date_consistency":"passed","requested_date":"2022-01-05",
+                "reports":{"participant_oi":[{"records":[{"CLIENTTYPE":"FII","FUTUREINDEXLONG":"100","FUTUREINDEXSHORT":"70"}]}]}
+            }))
+            result=run(source,root/"out.json",root)
+            self.assertIsNone(result["comparison_date"])
+            self.assertIsNone(result["participant_changes_vs_previous_day"])
+
+
 if __name__ == "__main__": unittest.main()
