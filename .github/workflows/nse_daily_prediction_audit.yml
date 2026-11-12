@@ -7,11 +7,6 @@ on:
     types: [completed]
     branches: [main]
   workflow_dispatch:
-    inputs:
-      trading_date:
-        description: "Optional exact NSE trading date to process (YYYY-MM-DD); leave blank to use today's verified NSE release"
-        required: false
-        type: string
 
 permissions:
   contents: write
@@ -41,55 +36,81 @@ jobs:
       - name: Install dependencies
         run: python -m pip install -r requirements.txt
 
-      - name: Resolve verified NSE trading date
+      - name: Resolve latest verified NSE trading date
         id: session
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          REQUESTED_DATE: ${{ inputs.trading_date }}
         run: |
-          if [ -n "$REQUESTED_DATE" ]; then
-            python - "$REQUESTED_DATE" >> "$GITHUB_OUTPUT" <<'PY'
-          import sys
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          import os
+          import re
+          import subprocess
+          import tempfile
+          import zipfile
           from datetime import date
-          day = date.fromisoformat(sys.argv[1])
-          if day.weekday() >= 5:
-              raise SystemExit("Weekend date is not an NSE trading session.")
-          print(f"trading_date={day.isoformat()}")
-          PY
-            exit 0
-          fi
+          from pathlib import Path
 
-          RUN_DATE="$(TZ=Asia/Kolkata date +%Y-%m-%d)"
-          TAG="nse-data-$RUN_DATE"
-          if ! gh release view "$TAG" >/dev/null 2>&1; then
-            echo "No validated NSE permanent release for $RUN_DATE; likely no published session archive. Daily audit skipped."
-            echo "trading_date=" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          mkdir -p /tmp/nse-release
-          gh release download "$TAG" --pattern "nse-market-data-$RUN_DATE.zip" --dir /tmp/nse-release
-          python - "$RUN_DATE" "/tmp/nse-release/nse-market-data-$RUN_DATE.zip" >> "$GITHUB_OUTPUT" <<'PY'
-          import json, sys, zipfile
-          from datetime import date
-          run_date, archive_path = sys.argv[1:]
-          with zipfile.ZipFile(archive_path) as z:
-              matches = [n for n in z.namelist() if n.endswith(f"nse_summary_{run_date}.json")]
-              if len(matches) != 1:
-                  raise SystemExit("Verified NSE archive must contain exactly one daily summary.")
-              summary = json.loads(z.read(matches[0]))
+          repo = os.environ["GH_REPO"]
+          today = date.today()
+          raw = subprocess.check_output([
+              "gh", "release", "list", "--repo", repo,
+              "--limit", "100", "--json", "tagName,isDraft,isPrerelease"
+          ], text=True)
+          releases = json.loads(raw)
+          candidates = []
+          for release in releases:
+              tag = release.get("tagName", "")
+              match = re.fullmatch(r"nse-data-(\\d{4}-\\d{2}-\\d{2})", tag)
+              if not match or release.get("isDraft") or release.get("isPrerelease"):
+                  continue
+              try:
+                  release_day = date.fromisoformat(match.group(1))
+              except ValueError:
+                  continue
+              if release_day <= today:
+                  candidates.append((release_day, tag))
+          candidates.sort(reverse=True)
+
           expected = {"equity_udiff", "fo_udiff", "participant_oi", "security_delivery"}
-          dates = summary.get("report_trading_dates", {})
-          if summary.get("trading_date_consistency") != "passed" or set(summary.get("reports", {})) != expected or set(dates) != expected:
-              raise SystemExit("NSE release summary does not contain four complete, date-consistent reports.")
-          unique_dates = set(dates.values())
-          if len(unique_dates) != 1:
-              raise SystemExit("NSE report trading dates are inconsistent.")
-          trading_date = unique_dates.pop()
-          parsed = date.fromisoformat(trading_date)
-          if parsed.weekday() >= 5:
-              raise SystemExit("NSE archive reports a weekend trading date; refusing to process.")
-          print(f"trading_date={trading_date}")
+          selected = None
+          with tempfile.TemporaryDirectory(prefix="nse-audit-") as temp:
+              for release_day, tag in candidates:
+                  archive_name = f"nse-market-data-{release_day.isoformat()}.zip"
+                  target_dir = Path(temp) / release_day.isoformat()
+                  target_dir.mkdir()
+                  attempt = subprocess.run([
+                      "gh", "release", "download", tag, "--repo", repo,
+                      "--pattern", archive_name, "--dir", str(target_dir)
+                  ], capture_output=True, text=True)
+                  archive = target_dir / archive_name
+                  if attempt.returncode or not archive.is_file():
+                      continue
+                  try:
+                      with zipfile.ZipFile(archive) as z:
+                          matches = [n for n in z.namelist()
+                                     if n.endswith(f"nse_summary_{release_day.isoformat()}.json")]
+                          if len(matches) != 1:
+                              continue
+                          summary = json.loads(z.read(matches[0]))
+                      dates = summary.get("report_trading_dates", {})
+                      if (summary.get("trading_date_consistency") != "passed"
+                              or set(summary.get("reports", {})) != expected
+                              or set(dates) != expected
+                              or set(dates.values()) != {release_day.isoformat()}):
+                          continue
+                      selected = release_day.isoformat()
+                      break
+                  except (OSError, ValueError, KeyError, zipfile.BadZipFile, json.JSONDecodeError):
+                      continue
+
+          if selected is None:
+              print("No verified NSE archive found in the latest 100 releases; audit skipped.")
+              print("trading_date=")
+          else:
+              print(f"trading_date={selected}")
+              print(f"verified_release_tag=nse-data-{selected}")
           PY
 
       - name: Process verified session and replay Agents 2–7
@@ -130,7 +151,7 @@ jobs:
           {
             echo "## NSE Daily Prediction Audit"
             echo "- Trading date: ${{ steps.session.outputs.trading_date || 'No verified NSE session; skipped' }}"
-            echo "- Source: validated NSE public archive only"
+            echo "- Source: latest validated NSE public archive only"
             if [ -f data/audit/daily_prediction_audit.json ]; then
               python - <<'PY'
           import json
