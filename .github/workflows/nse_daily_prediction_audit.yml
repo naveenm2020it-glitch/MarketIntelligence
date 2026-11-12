@@ -91,11 +91,21 @@ jobs:
                       continue
                   try:
                       with zipfile.ZipFile(archive) as z:
-                          matches = [n for n in z.namelist()
-                                     if n.endswith(f"nse_summary_{release_day.isoformat()}.json")]
-                          if len(matches) != 1:
+                          # Release tag/ZIP date is publication date, not necessarily
+                          # the NSE report trading date. Discover by summary content.
+                          summaries = []
+                          for name in z.namelist():
+                              if not name.lower().endswith(".json"):
+                                  continue
+                              try:
+                                  candidate_summary = json.loads(z.read(name))
+                              except (ValueError, UnicodeDecodeError):
+                                  continue
+                              if isinstance(candidate_summary, dict) and "report_trading_dates" in candidate_summary:
+                                  summaries.append(candidate_summary)
+                          if len(summaries) != 1:
                               continue
-                          summary = json.loads(z.read(matches[0]))
+                          summary = summaries[0]
                       dates = summary.get("report_trading_dates", {})
                       observed = set(dates.values())
                       if (summary.get("trading_date_consistency") != "passed"
