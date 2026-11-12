@@ -144,7 +144,12 @@ def find_previous(root: Path, current_date: str) -> Path | None:
         try:
             snapshot = json.loads(path.read_text(encoding="utf-8"))
             if snapshot.get("agent") == "participant_oi_intelligence" and snapshot.get("status") == "passed":
-                candidates.append((day, path))
+                # Sparse pilot dates are not consecutive sessions. Only compare
+                # nearby archived snapshots; otherwise report no day-on-day delta.
+                from datetime import date
+                gap = (date.fromisoformat(current_date) - date.fromisoformat(day)).days
+                if 0 < gap <= 7:
+                    candidates.append((day, path))
         except (OSError, json.JSONDecodeError):
             continue
     return sorted(candidates, key=lambda x: x[0])[-1][1] if candidates else None
