@@ -38,7 +38,7 @@ def build_rows(payload):
           "equity_bhavcopy_match":bool(e)})
     if not out: raise ValueError("No valid security delivery rows found")
     return out
-MAX_PREVIOUS_SNAPSHOT_GAP_DAYS = 5
+MAX_PREVIOUS_SNAPSHOT_GAP_DAYS = 10
 
 def previous_snapshot(root, day):
     if not root: return None
