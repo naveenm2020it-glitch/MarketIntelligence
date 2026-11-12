@@ -284,7 +284,7 @@ def run(analysis_root: Path, output: Path, minimum_samples: int = 30,
         ],
     }
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(json.dumps(result, indent=2, ensure_ascii=False) + "\\n", encoding="utf-8")
+    output.write_text(json.dumps(result, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     return result
 
 def main() -> int:
