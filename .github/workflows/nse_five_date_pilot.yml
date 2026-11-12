@@ -40,10 +40,10 @@ jobs:
               raise SystemExit("Pilot dates must be weekdays.")
           print("Validated exact five-date pilot:", ", ".join(x.isoformat() for x in sorted(dates)))
           PY
-      - name: Download four NSE reports and replay Agents 2–6 for exact dates only
+      - name: Download four NSE reports and replay Agents 2–6; fail unless all five dates pass
         env:
           PILOT_DATES: ${{ inputs.dates }}
-        run: python downloader/nse_historical_backfill.py --dates "$PILOT_DATES" --minimum-samples 30
+        run: python downloader/nse_historical_backfill.py --dates "$PILOT_DATES" --minimum-samples 30 --require-all-dates
       - name: Upload pilot evidence
         if: always()
         uses: actions/upload-artifact@v4
