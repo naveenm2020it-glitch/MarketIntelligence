@@ -200,15 +200,22 @@ def chronological_diagnostics(pairs: list[dict]) -> dict:
             })
 
     baseline_rows = []
+    agent6_matched_rows = []
     for index in range(1, count):
         previous, current = pairs[index - 1], pairs[index]
         # Previous target close is known no later than the current signal date.
+        # Score both methods on exactly the same rows for a fair comparison.
         if previous["target_date"] <= current["signal_date"]:
             baseline_rows.append({
                 "prediction": previous["actual"],
                 "actual": current["actual"],
             })
+            agent6_matched_rows.append({
+                "prediction": current["prediction"],
+                "actual": current["actual"],
+            })
     baseline_metrics = classification_metrics(baseline_rows)
+    agent6_matched_metrics = classification_metrics(agent6_matched_rows)
     gaps = [int(row["calendar_gap_days"]) for row in pairs]
     expiry_counts = {}
     for row in pairs:
@@ -222,7 +229,12 @@ def chronological_diagnostics(pairs: list[dict]) -> dict:
             "uses_current_target_for_prediction": False,
             "samples": len(baseline_rows),
             "metrics": baseline_metrics,
-            "note": "First pair has no prior observed target and is excluded. This is a simple baseline, not a trading strategy.",
+            "matched_agent6_comparison": {
+                "samples": len(agent6_matched_rows),
+                "metrics": agent6_matched_metrics,
+                "same_rows_as_baseline": True,
+            },
+            "note": "First pair has no prior observed target and is excluded. Agent 6 comparison metrics above use the exact same rows as this baseline. This is a simple baseline, not a trading strategy.",
         },
         "archive_and_contract_audit": {
             "sample_count": count,
