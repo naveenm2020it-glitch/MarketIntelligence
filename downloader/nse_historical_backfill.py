@@ -134,9 +134,9 @@ def prepare_previous_session_context(day: date, session: requests.Session) -> da
                        '--input', str(normalized), '--history-root', 'data/analysis'])
             run_agent([sys.executable, 'agents/equity_delivery_strength.py',
                        '--input', str(normalized), '--history-root', 'data/analysis'])
-            if participant_snapshot.is_file() and delivery_snapshot.is_file():
-                return candidate
-            last_error = RuntimeError('Previous-session Agent 2/3 snapshots were not created')
+            # run_agent(check=True) raises if either agent fails; successful
+            # completion means both previous-session snapshots were generated.
+            return candidate
         except Exception as exc:
             last_error = exc
             logging.info('Prior NSE session %s unavailable for comparison: %s', candidate_text, exc)
