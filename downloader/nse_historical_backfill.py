@@ -120,6 +120,12 @@ def prepare_previous_session_context(day: date, session: requests.Session) -> da
     last_error = None
     for offset in range(1, 11):
         candidate = day - timedelta(days=offset)
+        # NSE cash and derivatives archives must never be accepted for a weekend
+        # date. A file can exist at a guessed URL and still not represent a
+        # genuine exchange session (observed in the 2026-11-08 archive).
+        if candidate.weekday() >= 5:
+            logging.info('Rejecting non-trading weekend candidate %s', candidate.isoformat())
+            continue
         candidate_text = candidate.isoformat()
         participant_snapshot = ANALYSIS / candidate_text / 'participant_oi_intelligence.json'
         delivery_snapshot = ANALYSIS / candidate_text / 'delivery_strength.json'
