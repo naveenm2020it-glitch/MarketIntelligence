@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "agent": "walk_forward_validation",
+  "status": "insufficient_data",
+  "validation_type": "chronological_next_archived_session_out_of_sample",
+  "target_definition": {
+    "instrument": "NIFTY FUTIDX",
+    "measure": "same-expiry futures close-to-close return from signal date to next available archived session",
+    "neutral_band_bps": 10.0,
+    "neutral_band_percent": 0.1,
+    "contract_rollover": "Only the nearest expiry common to both dates is compared; no cross-expiry splice.",
+    "not_cash_index": true
+  },
+  "minimum_samples_required": 30,
+  "metrics": {
+    "samples": 1,
+    "accuracy": 0.0,
+    "balanced_accuracy": 0.0,
+    "macro_f1": 0.0,
+    "directional_target_samples": 0,
+    "directional_accuracy": null,
+    "confusion_matrix_actual_rows_predicted_columns": {
+      "bullish": {
+        "bullish": 0,
+        "bearish": 0,
+        "neutral": 0
+      },
+      "bearish": {
+        "bullish": 0,
+        "bearish": 0,
+        "neutral": 0
+      },
+      "neutral": {
+        "bullish": 1,
+        "bearish": 0,
+        "neutral": 0
+      }
+    },
+    "per_class": {
+      "bullish": {
+        "support": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "bearish": {
+        "support": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "neutral": {
+        "support": 1,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      }
+    },
+    "by_agent6_confidence_grade": {
+      "low": {
+        "samples": 1,
+        "accuracy": 0.0
+      }
+    }
+  },
+  "reliability_assessment": "Insufficient chronological samples. Metrics, if present, are exploratory only; no accuracy grade is assigned.",
+  "sample_pairs": [
+    {
+      "signal_date": "2026-11-11",
+      "target_date": "2026-11-12",
+      "calendar_gap_days": 1,
+      "prediction": "bullish",
+      "actual": "neutral",
+      "agent6_confidence": "low",
+      "agent6_confidence_score": 20,
+      "nifty_futidx_expiry": "2026-11-23",
+      "signal_day_close": 25214.2,
+      "target_day_close": 25214.2,
+      "target_return_percent": 0.0
+    }
+  ],
+  "skipped_pairs": [],
+  "limitations": [
+    "This is an EOD next-archived-session validation, not intraday validation.",
+    "The target is NIFTY futures, not the NIFTY 50 cash index; same-expiry matching avoids contract-rollover price splicing.",
+    "Only persisted Agent 6 and Agent 4 snapshots are used; no missing market values are fabricated.",
+    "A missing archive date can make the next archived session differ from the immediately following exchange session; calendar gaps above the configured limit are skipped.",
+    "The 10 bps neutral band is a fixed evaluation convention, not an optimized threshold.",
+    "Agent 6 confidence is a heuristic grade, not a probability; confidence-group accuracy is descriptive, not calibration.",
+    "At least 30 completed pairs are required before reporting the backtest as passed; larger samples and multiple market regimes are needed for stronger conclusions.",
+    "No trading costs, slippage, execution assumptions or profitability are modelled."
+  ]
+}
