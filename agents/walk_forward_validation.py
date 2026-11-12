@@ -173,6 +173,69 @@ def classification_metrics(pairs: list[dict]) -> dict:
     }
 
 
+def chronological_diagnostics(pairs: list[dict]) -> dict:
+    """Summarize ordered performance and compare with a deployable persistence baseline.
+
+    The baseline predicts the next pair's class using the previous pair's already
+    observed actual class. It never uses the current pair's target to form a prediction.
+    """
+    count = len(pairs)
+    periods = []
+    if count:
+        boundaries = (0, count // 3, (2 * count) // 3, count)
+        labels = ("early", "middle", "late")
+        for index, label in enumerate(labels):
+            subset = pairs[boundaries[index]:boundaries[index + 1]]
+            if not subset:
+                continue
+            periods.append({
+                "period": label,
+                "signal_date_start": subset[0]["signal_date"],
+                "signal_date_end": subset[-1]["signal_date"],
+                "samples": len(subset),
+                "metrics": classification_metrics(subset),
+            })
+
+    baseline_rows = []
+    for index in range(1, count):
+        previous, current = pairs[index - 1], pairs[index]
+        # Previous target close is known no later than the current signal date.
+        if previous["target_date"] <= current["signal_date"]:
+            baseline_rows.append({
+                "prediction": previous["actual"],
+                "actual": current["actual"],
+            })
+    baseline_metrics = classification_metrics(baseline_rows)
+    gaps = [int(row["calendar_gap_days"]) for row in pairs]
+    expiry_counts = {}
+    for row in pairs:
+        expiry = row["nifty_futidx_expiry"]
+        expiry_counts[expiry] = expiry_counts.get(expiry, 0) + 1
+
+    return {
+        "chronological_periods": periods,
+        "persistence_baseline": {
+            "method": "predict the next target class using the previous completed pair's actual class",
+            "uses_current_target_for_prediction": False,
+            "samples": len(baseline_rows),
+            "metrics": baseline_metrics,
+            "note": "First pair has no prior observed target and is excluded. This is a simple baseline, not a trading strategy.",
+        },
+        "archive_and_contract_audit": {
+            "sample_count": count,
+            "signal_date_start": pairs[0]["signal_date"] if pairs else None,
+            "signal_date_end": pairs[-1]["signal_date"] if pairs else None,
+            "target_date_start": pairs[0]["target_date"] if pairs else None,
+            "target_date_end": pairs[-1]["target_date"] if pairs else None,
+            "calendar_gap_days_min": min(gaps) if gaps else None,
+            "calendar_gap_days_max": max(gaps) if gaps else None,
+            "calendar_gap_days_counts": {str(value): gaps.count(value) for value in sorted(set(gaps))},
+            "common_expiry_sample_counts": dict(sorted(expiry_counts.items())),
+            "unique_common_expiries": len(expiry_counts),
+        },
+    }
+
+
 def run(analysis_root: Path, output: Path, minimum_samples: int = 30,
         neutral_band_bps: float = 10.0, max_gap_days: int = 5) -> dict:
     if minimum_samples < 1 or neutral_band_bps < 0 or max_gap_days < 1:
@@ -181,12 +244,14 @@ def run(analysis_root: Path, output: Path, minimum_samples: int = 30,
         raise ValueError(f"Analysis history directory does not exist: {analysis_root}")
     pairs, skipped = build_pairs(analysis_root, neutral_band_bps, max_gap_days)
     metrics = classification_metrics(pairs)
+    diagnostics = chronological_diagnostics(pairs)
     enough = len(pairs) >= minimum_samples
     result = {
-        "schema_version": 1,
+        "schema_version": 2,
         "agent": "walk_forward_validation",
         "status": "passed" if enough else "insufficient_data",
         "validation_type": "chronological_next_archived_session_out_of_sample",
+        "validation_scope": "Evaluate the existing Agent 6 rule-based direction against the next archived session. No ML model is trained in this workflow.",
         "target_definition": {
             "instrument": "NIFTY FUTIDX",
             "measure": "same-expiry futures close-to-close return from signal date to next available archived session",
@@ -197,28 +262,30 @@ def run(analysis_root: Path, output: Path, minimum_samples: int = 30,
         },
         "minimum_samples_required": minimum_samples,
         "metrics": metrics,
+        "diagnostics": diagnostics,
         "reliability_assessment": (
-            "Descriptive backtest threshold met; still not proof of future profitability or statistical stability."
+            "Descriptive chronological evaluation threshold met; compare against the persistence baseline and inspect period stability. This is not proof of future profitability or statistical stability."
             if enough else
             "Insufficient chronological samples. Metrics, if present, are exploratory only; no accuracy grade is assigned."
         ),
         "sample_pairs": pairs,
         "skipped_pairs": skipped,
         "limitations": [
-            "This is an EOD next-archived-session validation, not intraday validation.",
+            "This is an EOD next-archived-session evaluation of the existing Agent 6 rules, not ML model training or intraday validation.",
             "The target is NIFTY futures, not the NIFTY 50 cash index; same-expiry matching avoids contract-rollover price splicing.",
             "Only persisted Agent 6 and Agent 4 snapshots are used; no missing market values are fabricated.",
             "A missing archive date can make the next archived session differ from the immediately following exchange session; calendar gaps above the configured limit are skipped.",
             "The 10 bps neutral band is a fixed evaluation convention, not an optimized threshold.",
             "Agent 6 confidence is a heuristic grade, not a probability; confidence-group accuracy is descriptive, not calibration.",
-            "At least 30 completed pairs are required before reporting the backtest as passed; larger samples and multiple market regimes are needed for stronger conclusions.",
+            "Chronological period metrics are descriptive slices of this sample and are not independently trained/tested model folds.",
+            "The persistence baseline uses only the previous completed pair's observed target class; its first pair is omitted.",
+            "At least 30 completed pairs are required before reporting the evaluation as passed; larger samples and multiple market regimes are needed for stronger conclusions.",
             "No trading costs, slippage, execution assumptions or profitability are modelled."
         ],
     }
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(json.dumps(result, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    output.write_text(json.dumps(result, indent=2, ensure_ascii=False) + "\\n", encoding="utf-8")
     return result
-
 
 def main() -> int:
     parser = argparse.ArgumentParser()
