@@ -50,7 +50,7 @@ jobs:
           import sys
           import tempfile
           import zipfile
-          from datetime import date
+          from datetime import date, datetime
           from pathlib import Path
 
           repo = os.environ["GH_REPO"]
@@ -115,7 +115,14 @@ jobs:
                               or set(dates) != expected
                               or len(observed) != 1):
                           continue
-                      trading_day = date.fromisoformat(next(iter(observed)))
+                      raw_trading_date = next(iter(observed))
+                      try:
+                          trading_day = date.fromisoformat(raw_trading_date)
+                      except ValueError:
+                          # NSE summary emits dates such as 11-Nov-2026.
+                          trading_day = datetime.strptime(
+                              raw_trading_date, "%d-%b-%Y"
+                          ).date()
                       if trading_day > today or trading_day.weekday() >= 5:
                           continue
                       selected = trading_day.isoformat()
