@@ -41,7 +41,7 @@ jobs:
         run: |
           python - <<'PY'
           import os
-          from datetime import date
+          from datetime import date, timedelta
           start = date.fromisoformat(os.environ["START_DATE"])
           end = date.fromisoformat(os.environ["END_DATE"])
           span = (end - start).days
@@ -51,7 +51,7 @@ jobs:
               raise SystemExit("This validation workflow is capped at 56 calendar days.")
           if end > date.today():
               raise SystemExit("End date cannot be in the future.")
-          weekdays = sum((start.toordinal() + offset) % 7 < 5 for offset in range(span + 1))
+          weekdays = sum((start + timedelta(days=offset)).weekday() < 5 for offset in range(span + 1))
           print(f"Bounded NSE collection: {start} through {end} ({span + 1} calendar days; {weekdays} weekdays maximum before NSE holidays).")
           PY
 
