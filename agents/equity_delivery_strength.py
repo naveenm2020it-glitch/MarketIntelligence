@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Agent 3: EOD equity delivery strength from NSE Equity UDiFF and Security Delivery."""
 import argparse, json, re, sys
+from datetime import date
 from pathlib import Path
 
 def nk(k): return re.sub(r"[^A-Z0-9]", "", str(k).upper())
@@ -37,11 +38,18 @@ def build_rows(payload):
           "equity_bhavcopy_match":bool(e)})
     if not out: raise ValueError("No valid security delivery rows found")
     return out
+MAX_PREVIOUS_SNAPSHOT_GAP_DAYS = 5
+
 def previous_snapshot(root, day):
     if not root: return None
     candidates=[]
     for p in root.glob("*/delivery_strength.json"):
-        if p.parent.name>=day: continue
+        # Ignore stale snapshots from sparse pilot dates or unrelated periods.
+        try:
+            gap_days = (date.fromisoformat(day) - date.fromisoformat(p.parent.name)).days
+        except ValueError:
+            continue
+        if not 1 <= gap_days <= MAX_PREVIOUS_SNAPSHOT_GAP_DAYS: continue
         try:
             x=json.loads(p.read_text())
             if x.get("agent")=="equity_delivery_strength" and x.get("status")=="passed": candidates.append((p.parent.name,p))
