@@ -168,6 +168,14 @@ def compact_snapshots(day: str) -> None:
         p = folder / name
         if p.exists(): p.unlink()
 
+def backfill_exit_code(summary: dict, require_all_dates: bool = False) -> int:
+    if not summary.get('passed_days'):
+        return 1
+    if require_all_dates and summary.get('skipped_or_failed_days'):
+        return 1
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     date_mode = ap.add_mutually_exclusive_group(required=True)
@@ -175,6 +183,7 @@ def main() -> int:
     date_mode.add_argument('--start-date', help='YYYY-MM-DD inclusive; use with --end-date for continuous backfills')
     ap.add_argument('--end-date', help='YYYY-MM-DD inclusive; required with --start-date')
     ap.add_argument('--minimum-samples', type=int, default=30)
+    ap.add_argument('--require-all-dates', action='store_true', help='Fail the run if any requested date fails')
     args = ap.parse_args()
     if args.dates:
         try:
@@ -227,7 +236,7 @@ def main() -> int:
                       'skipped_or_failed': len(summary['skipped_or_failed_days']),
                       'validation_report': 'data/backfill/walk_forward_validation.json',
                       'summary': str(out)}, indent=2))
-    return 0 if summary['passed_days'] else 1
+    return backfill_exit_code(summary, args.require_all_dates)
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')

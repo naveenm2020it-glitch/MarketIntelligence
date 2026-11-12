@@ -19,6 +19,11 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 from zoneinfo import ZoneInfo
 
+# Direct execution sets sys.path[0] to downloader/, not the repository root.
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
 RAW = Path("data/raw")
 EXTRACTED = Path("data/extracted")
 LOGS = Path("logs")

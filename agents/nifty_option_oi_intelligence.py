@@ -36,7 +36,7 @@ def analyze(files):
             skipped["non_nifty_option"] += 1; continue
         opt = str(r.get("OPTNTP") or r.get("OPTIONTYPE") or r.get("OPTIONTYP") or "").strip().upper()
         opt = {"CALL":"CE","PUT":"PE"}.get(opt,opt)
-        strike = first(r,"STRKPRIC","STRIKEPRICE","STRIKE")
+        strike = first(r,"STRKPRIC","STRIKEPR","STRIKEPRICE","STRIKE")
         oi = first(r,"OPNINTRST","OPENINTEREST")
         chg = first(r,"CHNGINOPNINTRST","CHANGEINOPENINTEREST","CHNGINOPNINT")
         expiry = str(r.get("XPRYDT") or r.get("EXPIRYDT") or "").strip()
