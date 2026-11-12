@@ -263,6 +263,8 @@ def main() -> int:
     date_mode.add_argument('--start-date', help='YYYY-MM-DD inclusive; use with --end-date for continuous backfills')
     ap.add_argument('--end-date', help='YYYY-MM-DD inclusive; required with --start-date')
     ap.add_argument('--minimum-samples', type=int, default=30)
+    ap.add_argument('--validation-output', default='data/backfill/walk_forward_validation.json',
+                    help='Agent 7 report path; keep daily and historical reports separate')
     ap.add_argument('--require-all-dates', action='store_true', help='Fail the run if any requested date fails')
     args = ap.parse_args()
     if args.dates:
@@ -306,7 +308,7 @@ def main() -> int:
     for daystr in summary['passed_days']: compact_snapshots(daystr)
     if summary['passed_days']:
         run_agent([sys.executable, 'agents/walk_forward_validation.py', '--analysis-root', 'data/analysis',
-                   '--output', 'data/backfill/walk_forward_validation.json',
+                   '--output', args.validation_output,
                    '--minimum-samples', str(args.minimum_samples)])
     out = Path('data/backfill/backfill_summary.json')
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -314,7 +316,7 @@ def main() -> int:
     print(json.dumps({'attempted_weekdays': summary['trading_days_attempted'],
                       'valid_agent_days': len(summary['passed_days']),
                       'skipped_or_failed': len(summary['skipped_or_failed_days']),
-                      'validation_report': 'data/backfill/walk_forward_validation.json',
+                      'validation_report': args.validation_output,
                       'summary': str(out)}, indent=2))
     return backfill_exit_code(summary, args.require_all_dates)
 

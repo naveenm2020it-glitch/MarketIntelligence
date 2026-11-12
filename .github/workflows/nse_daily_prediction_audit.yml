@@ -148,14 +148,15 @@ jobs:
         run: |
           python downloader/nse_historical_backfill.py \
             --dates "$TRADING_DATE" \
-            --minimum-samples 30
+            --minimum-samples 30 \
+            --validation-output data/backfill/daily_cumulative_validation.json
 
       - name: Update permanent daily prediction audit
         if: steps.session.outputs.trading_date != ''
         run: |
           python -m agents.daily_prediction_audit \
             --analysis-root data/analysis \
-            --validation-report data/backfill/walk_forward_validation.json \
+            --validation-report data/backfill/daily_cumulative_validation.json \
             --output data/audit/daily_prediction_audit.json \
             --csv-output data/audit/daily_prediction_audit.csv
 
