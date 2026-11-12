@@ -156,7 +156,7 @@ jobs:
         run: |
           python -m agents.daily_prediction_audit \
             --analysis-root data/analysis \
-            --validation-report data/backfill/walk_forward_validation.json \
+            --validation-report data/backfill/daily_cumulative_validation.json \
             --output data/audit/daily_prediction_audit.json \
             --csv-output data/audit/daily_prediction_audit.csv
 
