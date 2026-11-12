@@ -190,7 +190,7 @@ def process_day(day: date, session: requests.Session) -> dict:
             prior_input = Path('data/normalized') / daystr / 'previous_session_fo.json'
             prior_input.parent.mkdir(parents=True, exist_ok=True)
             prior_input.write_text(
-                json.dumps(prior_payload, indent=2, ensure_ascii=False) + '\\n',
+                json.dumps(prior_payload, indent=2, ensure_ascii=False) + chr(10),
                 encoding='utf-8'
             )
             futures_command.extend(['--previous-input', str(prior_input)])
