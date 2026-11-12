@@ -178,7 +178,13 @@
   },
   "reliability_assessment": "Insufficient chronological samples. Metrics, if present, are exploratory only; no accuracy grade is assigned.",
   "sample_pairs": [],
-  "skipped_pairs": [],
+  "skipped_pairs": [
+    {
+      "signal_date": "2026-01-30",
+      "target_date": "2026-11-11",
+      "reason": "Archived-session gap 285 days exceeds allowed range"
+    }
+  ],
   "limitations": [
     "This is an EOD next-archived-session evaluation of the existing Agent 6 rules, not ML model training or intraday validation.",
     "The target is NIFTY futures, not the NIFTY 50 cash index; same-expiry matching avoids contract-rollover price splicing.",
