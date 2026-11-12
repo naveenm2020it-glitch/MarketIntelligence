@@ -5,10 +5,12 @@ No intraday inference, fabricated values, or predictive accuracy claims are prod
 """
 from __future__ import annotations
 import argparse, json, re, sys
+from datetime import date
 from pathlib import Path
 from typing import Any
 
 PARTICIPANTS = {"FII", "DII", "CLIENT", "PRO"}
+MAX_PREVIOUS_SNAPSHOT_GAP_DAYS = 5
 ALIASES = {
     "FII": "FII", "DII": "DII", "CLIENT": "CLIENT", "CLIENTS": "CLIENT",
     "PRO": "PRO", "PROPRIETARY": "PRO",
@@ -140,7 +142,13 @@ def find_previous(root: Path, current_date: str) -> Path | None:
     candidates = []
     for path in root.glob("*/participant_oi_intelligence.json"):
         day = path.parent.name
-        if day >= current_date: continue
+        # Sparse pilot dates must never be treated as previous trading sessions.
+        # A persisted snapshot is eligible only within the bounded recent window.
+        try:
+            gap_days = (date.fromisoformat(current_date) - date.fromisoformat(day)).days
+        except ValueError:
+            continue
+        if not 1 <= gap_days <= MAX_PREVIOUS_SNAPSHOT_GAP_DAYS: continue
         try:
             snapshot = json.loads(path.read_text(encoding="utf-8"))
             if snapshot.get("agent") == "participant_oi_intelligence" and snapshot.get("status") == "passed":

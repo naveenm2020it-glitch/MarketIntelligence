@@ -23,6 +23,20 @@ class DeliveryTests(unittest.TestCase):
             result=run(src,root/"out.json",root)
             self.assertEqual(result["comparison_date"],"2026-11-10")
             self.assertEqual(result["changes_vs_previous_day"]["AAA"]["delivery_percentage_change_pp"],5)
+    def test_sparse_historical_pilot_does_not_use_years_old_snapshot(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d); old=root/"2020-04-13"; old.mkdir()
+            (old/"delivery_strength.json").write_text(json.dumps({
+                "agent":"equity_delivery_strength","status":"passed",
+                "stocks":[{"symbol":"AAA","delivery_percentage":55,"delivery_quantity":500}]
+            }))
+            payload=self.payload()
+            payload["requested_date"]="2022-01-05"
+            src=root/"normalized.json"; src.write_text(json.dumps(payload))
+            result=run(src,root/"out.json",root)
+            self.assertIsNone(result["comparison_date"])
+            self.assertIsNone(result["changes_vs_previous_day"])
+
     def test_missing_report_fails_closed(self):
         p=self.payload(); del p["reports"]["security_delivery"]
         with tempfile.TemporaryDirectory() as d:
