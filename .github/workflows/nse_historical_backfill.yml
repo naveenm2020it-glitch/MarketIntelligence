@@ -1,6 +1,10 @@
 name: NSE Historical EOD Backfill and Agent Replay
 on:
-  # Historical runs are manual so code pushes cannot accidentally start a wide backfill.
+  # Manual by default; the tagged merge below launches the user-requested two-year run once.
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/nse_historical_backfill.yml
   workflow_dispatch:
     inputs:
       start_date:
@@ -18,11 +22,12 @@ concurrency:
   cancel-in-progress: false
 jobs:
   historical-backfill:
+    if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[run-two-year-backfill]') }}
     runs-on: ubuntu-latest
     timeout-minutes: 360
     env:
-      START_DATE: ${{ inputs.start_date || '2026-07-01' }}
-      END_DATE: ${{ inputs.end_date || '2026-11-10' }}
+      START_DATE: ${{ inputs.start_date || '2024-11-12' }}
+      END_DATE: ${{ inputs.end_date || '2026-11-12' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -32,8 +37,23 @@ jobs:
       - name: Install dependencies
         run: python -m pip install -r requirements.txt
       - name: Download historical NSE reports and replay Agents 2–6 chronologically
-        run: python downloader/nse_historical_backfill.py --start-date "$START_DATE" --end-date "$END_DATE" --minimum-samples 30 \
+        run: |
+          python downloader/nse_historical_backfill.py --start-date "$START_DATE" --end-date "$END_DATE" --minimum-samples 30 \
             --validation-output data/backfill/historical_walk_forward_validation.json
+      - name: Require a valid two-year walk-forward result
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path("data/backfill/historical_walk_forward_validation.json")
+          if not path.is_file():
+              raise SystemExit("Historical validation report was not created")
+          report = json.loads(path.read_text(encoding="utf-8"))
+          samples = report.get("metrics", {}).get("samples", 0)
+          if report.get("status") != "passed" or samples < 30:
+              raise SystemExit(f"Historical validation insufficient: status={report.get('status')}, samples={samples}; need at least 30")
+          print(f"Historical walk-forward validation passed with {samples} valid pairs")
+          PY
       - name: Persist historical Agent 6 and compact NIFTY futures snapshots
         if: always() && hashFiles('data/analysis/*/eod_market_confluence_intelligence.json') != ''
         run: |
