@@ -18,6 +18,7 @@ class HistoricalBackfillCliTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, msg=result.stderr)
         self.assertIn("--start-date", result.stdout)
         self.assertIn("--end-date", result.stdout)
+        self.assertIn("--validation-output", result.stdout)
 
 
 if __name__ == "__main__":
