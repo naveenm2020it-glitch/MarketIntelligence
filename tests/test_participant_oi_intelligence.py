@@ -54,6 +54,26 @@ class ParticipantOIIntelligenceTests(unittest.TestCase):
             self.assertEqual(result["comparison_date"],"2026-11-10")
             self.assertEqual(result["participant_changes_vs_previous_day"]["FII"]["index_futures_net_long"],10)
 
+    def test_sparse_historical_pilot_does_not_use_years_old_snapshot(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp); history=root/"analysis"
+            old=history/"2020-04-13"; old.mkdir(parents=True)
+            (old/"participant_oi_intelligence.json").write_text(json.dumps({
+                "agent":"participant_oi_intelligence","status":"passed",
+                "participants":{"FII":{"index_futures_net_long":20,"index_options_directional_net":5}}
+            }))
+            today=history/"2022-01-05"; today.mkdir(parents=True)
+            source=today/"normalized.json"
+            source.write_text(json.dumps({
+                "status":"passed","date_consistency":"passed","requested_date":"2022-01-05",
+                "reports":{"participant_oi":self.report([{
+                    "CLIENTTYPE":"FII","FUTUREINDEXLONG":"100","FUTUREINDEXSHORT":"70"
+                }])}
+            }))
+            result=run(source,root/"out.json",history)
+            self.assertIsNone(result["comparison_date"])
+            self.assertIsNone(result["participant_changes_vs_previous_day"])
+
     def test_end_to_end_without_previous_day(self):
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp); day=root/"normalized"/"2026-11-11"
