@@ -43,7 +43,7 @@ jobs:
         run: python downloader/nse_downloader.py
       - name: Resolve verified NSE trading date
         run: |
-          RUN_DATE="$NSE_TRADING_DATE"
+          RUN_DATE="$(TZ=Asia/Kolkata date +%Y-%m-%d)"
           SUMMARY="logs/nse_summary_${RUN_DATE}.json"
           DATE="$(python - "$SUMMARY" <<'PY'
           import json, sys
