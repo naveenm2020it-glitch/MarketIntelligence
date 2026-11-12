@@ -110,6 +110,41 @@ def fetch_previous_fo_payload(day: date, session: requests.Session) -> dict:
             last_error = exc
     raise RuntimeError(f'Could not retrieve a prior NSE F&O session within 10 calendar days: {last_error}')
 
+def prepare_previous_session_context(day: date, session: requests.Session) -> date | None:
+    """Persist Agent 2/3 snapshots for the actual nearest prior NSE session.
+
+    The five-date pilot is intentionally sparse, so the preceding pilot date
+    is not necessarily the preceding exchange session. Probe NSE archive dates
+    backwards and accept a date only when all four source reports validate.
+    """
+    last_error = None
+    for offset in range(1, 11):
+        candidate = day - timedelta(days=offset)
+        candidate_text = candidate.isoformat()
+        participant_snapshot = ANALYSIS / candidate_text / 'participant_oi_intelligence.json'
+        delivery_snapshot = ANALYSIS / candidate_text / 'delivery_strength.json'
+        if participant_snapshot.is_file() and delivery_snapshot.is_file():
+            return candidate
+        try:
+            for key, url in urls(candidate).items():
+                fetch_one(session, candidate, key, url)
+            normalized = Path('data/normalized') / candidate_text / 'normalized.json'
+            normalize_day(EXTRACTED, normalized, candidate_text)
+            run_agent([sys.executable, 'agents/participant_oi_intelligence.py',
+                       '--input', str(normalized), '--history-root', 'data/analysis'])
+            run_agent([sys.executable, 'agents/equity_delivery_strength.py',
+                       '--input', str(normalized), '--history-root', 'data/analysis'])
+            if participant_snapshot.is_file() and delivery_snapshot.is_file():
+                return candidate
+            last_error = RuntimeError('Previous-session Agent 2/3 snapshots were not created')
+        except Exception as exc:
+            last_error = exc
+            logging.info('Prior NSE session %s unavailable for comparison: %s', candidate_text, exc)
+    logging.warning('No validated previous NSE session found within 10 calendar days before %s: %s',
+                    day.isoformat(), last_error)
+    return None
+
+
 def needs_prior_session_close(normalized_path: Path) -> bool:
     payload = json.loads(normalized_path.read_text(encoding='utf-8'))
     files = payload.get('reports', {}).get('fo_udiff', [])
@@ -134,6 +169,9 @@ def process_day(day: date, session: requests.Session) -> dict:
             result['reports'][key] = fetch_one(session, day, key, url)
         normalized = Path('data/normalized') / daystr / 'normalized.json'
         normalize_day(EXTRACTED, normalized, daystr)
+        # The selected pilot dates are intentionally sparse. Fetch and validate
+        # the nearest actual prior NSE session before computing day-over-day agents.
+        prepare_previous_session_context(day, session)
         run_agent([sys.executable, 'agents/participant_oi_intelligence.py', '--input', str(normalized), '--history-root', 'data/analysis'])
         run_agent([sys.executable, 'agents/equity_delivery_strength.py', '--input', str(normalized), '--history-root', 'data/analysis'])
         futures_command = [sys.executable, 'agents/futures_buildup_intelligence.py', '--input', str(normalized)]
