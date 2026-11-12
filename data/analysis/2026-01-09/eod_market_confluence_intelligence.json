@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "agent": "eod_market_confluence_intelligence",
+  "status": "passed",
+  "trading_date": "2026-01-09",
+  "data_scope": "EOD market-direction confluence only",
+  "direction": "bearish",
+  "confidence": "moderate",
+  "confidence_score": 45,
+  "score": -0.6429,
+  "coverage_percent": 70.0,
+  "signals": {
+    "participant": {
+      "direction": "mixed",
+      "available": true,
+      "evidence": {
+        "FII": "bearish",
+        "DII": "bullish"
+      },
+      "note": "FII and DII are shown separately; participant counterpart positions are not summed."
+    },
+    "delivery": {
+      "direction": "bearish",
+      "available": true,
+      "evidence": {
+        "matched_stocks": 2382,
+        "positive_price_change_stocks": 382,
+        "negative_price_change_stocks": 1980,
+        "median_delivery_percentage": 53.62
+      },
+      "note": "Uses EOD EQ-stock breadth among rows with price and delivery values; delivery alone is not treated as buying."
+    },
+    "futures": {
+      "direction": "bearish",
+      "available": true,
+      "evidence": {
+        "nifty_index_future_classifications": [
+          "short_buildup"
+        ],
+        "bullish_contracts": 0,
+        "bearish_contracts": 1
+      }
+    },
+    "options": {
+      "direction": "unavailable",
+      "available": false,
+      "evidence": {
+        "expiry": "2026-01-13",
+        "highest_put_oi_support": {
+          "strike": 25500.0,
+          "put_oi": 10784670.0,
+          "put_change_oi": 1571245.0,
+          "rank": 1
+        },
+        "highest_call_oi_resistance": {
+          "strike": 26000.0,
+          "call_oi": 20587385.0,
+          "call_change_oi": 6659835.0,
+          "rank": 1
+        },
+        "max_pain": 25800.0
+      },
+      "note": "Nearest-expiry Put/Call OI is retained as descriptive support/resistance evidence only; it is not converted into a directional signal."
+    }
+  },
+  "summary_method": "Weighted signed agreement across available EOD signals, normalized by available weight. Missing sources reduce coverage and confidence; no unavailable source is imputed.",
+  "evidence_weights": {
+    "participant": {
+      "direction": "mixed",
+      "weight": 25
+    },
+    "futures": {
+      "direction": "bearish",
+      "weight": 30
+    },
+    "delivery": {
+      "direction": "bearish",
+      "weight": 15
+    }
+  },
+  "source_agents": {
+    "participant": true,
+    "delivery": true,
+    "futures": true,
+    "options": true
+  },
+  "limitations": [
+    "All inputs are end-of-day snapshots; this is not an intraday signal.",
+    "Participant positioning, futures buildup, option OI and equity delivery describe different market dimensions.",
+    "NIFTY index futures are required for futures confirmation; stock futures are not substituted.",
+    "Options OI uses the nearest listed expiry only; expiries are not merged.",
+    "Delivery breadth is an equity-universe proxy, not proof of NIFTY constituent buying.",
+    "Confidence is a rule-based evidence-agreement grade, not a statistically calibrated probability.",
+    "No prediction accuracy or profitability is claimed; separate chronological walk-forward backtesting is required."
+  ]
+}
