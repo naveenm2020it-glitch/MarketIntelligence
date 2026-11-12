@@ -26,8 +26,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 360
     env:
-      START_DATE: ${{ inputs.start_date || '2026-07-01' }}
-      END_DATE: ${{ inputs.end_date || '2026-11-10' }}
+      START_DATE: ${{ inputs.start_date || '2024-11-12' }}
+      END_DATE: ${{ inputs.end_date || '2026-11-12' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
