@@ -41,9 +41,28 @@ jobs:
         run: python -m pip install -r requirements.txt
       - name: Download and validate NSE reports
         run: python downloader/nse_downloader.py
+      - name: Resolve verified NSE trading date
+        run: |
+          RUN_DATE="$NSE_TRADING_DATE"
+          SUMMARY="logs/nse_summary_${RUN_DATE}.json"
+          DATE="$(python - "$SUMMARY" <<'PY'
+          import json, sys
+          from pathlib import Path
+          summary = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+          expected = {"equity_udiff", "fo_udiff", "participant_oi", "security_delivery"}
+          dates = summary.get("report_trading_dates", {})
+          if summary.get("failures") or summary.get("missing_reports") or summary.get("trading_date_consistency") != "passed":
+              raise SystemExit("NSE report collection is incomplete or date-inconsistent; refusing to run agents.")
+          if set(dates) != expected or len(set(dates.values())) != 1:
+              raise SystemExit(f"Expected four reports for one common NSE trading date; got {dates}")
+          print(next(iter(dates.values())))
+          PY
+          )"
+          echo "NSE_TRADING_DATE=$DATE" >> "$GITHUB_ENV"
+          echo "Verified source NSE trading date: $DATE (collection date: $RUN_DATE)"
       - name: Normalize reports using actual NSE CSVs
         run: |
-          DATE="$(TZ=Asia/Kolkata date +%Y-%m-%d)"
+          DATE="${{ env.NSE_TRADING_DATE }}"
           python agents/data_normalization.py --date "$DATE"
       - name: Run Agent 2 — FII/DII Participant OI Intelligence
         run: python agents/participant_oi_intelligence.py --input "data/normalized/$(TZ=Asia/Kolkata date +%Y-%m-%d)/normalized.json" --history-root data/analysis
