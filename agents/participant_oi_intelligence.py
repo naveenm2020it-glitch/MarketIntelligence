@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any
 
 PARTICIPANTS = {"FII", "DII", "CLIENT", "PRO"}
-MAX_PREVIOUS_SNAPSHOT_GAP_DAYS = 5
+MAX_PREVIOUS_SNAPSHOT_GAP_DAYS = 10
 ALIASES = {
     "FII": "FII", "DII": "DII", "CLIENT": "CLIENT", "CLIENTS": "CLIENT",
     "PRO": "PRO", "PROPRIETARY": "PRO",
