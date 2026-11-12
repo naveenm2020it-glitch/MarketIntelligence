@@ -47,6 +47,7 @@ jobs:
           import os
           import re
           import subprocess
+          import sys
           import tempfile
           import zipfile
           from datetime import date
@@ -75,6 +76,7 @@ jobs:
 
           expected = {"equity_udiff", "fo_udiff", "participant_oi", "security_delivery"}
           selected = None
+          selected_tag = None
           with tempfile.TemporaryDirectory(prefix="nse-audit-") as temp:
               for release_day, tag in candidates:
                   archive_name = f"nse-market-data-{release_day.isoformat()}.zip"
@@ -95,22 +97,31 @@ jobs:
                               continue
                           summary = json.loads(z.read(matches[0]))
                       dates = summary.get("report_trading_dates", {})
+                      observed = set(dates.values())
                       if (summary.get("trading_date_consistency") != "passed"
+                              or summary.get("failures")
+                              or summary.get("missing_reports")
                               or set(summary.get("reports", {})) != expected
                               or set(dates) != expected
-                              or set(dates.values()) != {release_day.isoformat()}):
+                              or len(observed) != 1):
                           continue
-                      selected = release_day.isoformat()
+                      trading_day = date.fromisoformat(next(iter(observed)))
+                      if trading_day > today or trading_day.weekday() >= 5:
+                          continue
+                      selected = trading_day.isoformat()
+                      selected_tag = tag
                       break
                   except (OSError, ValueError, KeyError, zipfile.BadZipFile, json.JSONDecodeError):
                       continue
 
           if selected is None:
-              print("No verified NSE archive found in the latest 100 releases; audit skipped.")
+              print("No archive with four consistent, verified NSE report dates found; audit skipped.", file=sys.stderr)
               print("trading_date=")
+              print("verified_release_tag=")
           else:
+              print(f"Resolved verified NSE trading date {selected} from release {selected_tag}", file=sys.stderr)
               print(f"trading_date={selected}")
-              print(f"verified_release_tag=nse-data-{selected}")
+              print(f"verified_release_tag={selected_tag}")
           PY
 
       - name: Process verified session and replay Agents 2–7
