@@ -126,26 +126,83 @@ def needs_prior_session_close(normalized_path: Path) -> bool:
 def run_agent(command: list[str]) -> None:
     subprocess.run(command, check=True)
 
+
+def run_agent_recorded(result: dict, agent_name: str, command: list[str]) -> None:
+    """Run one agent and record its exact completion state in the per-date pilot summary."""
+    try:
+        run_agent(command)
+    except Exception as exc:
+        result.setdefault('agent_status', {})[agent_name] = {
+            'status': 'failed', 'reason': str(exc)
+        }
+        raise
+    result.setdefault('agent_status', {})[agent_name] = {'status': 'passed'}
+
+
+def should_compact_snapshots(exact_date_mode: bool) -> bool:
+    """Keep full per-agent outputs for bounded exact-date pilots; compact range backfills."""
+    return not exact_date_mode
+
+
 def process_day(day: date, session: requests.Session) -> dict:
     daystr = day.isoformat()
-    result = {'date': daystr, 'reports': {}, 'status': 'failed'}
+    result = {'date': daystr, 'reports': {}, 'agent_status': {}, 'status': 'failed'}
     try:
         for key, url in urls(day).items():
             result['reports'][key] = fetch_one(session, day, key, url)
         normalized = Path('data/normalized') / daystr / 'normalized.json'
-        normalize_day(EXTRACTED, normalized, daystr)
-        run_agent([sys.executable, 'agents/participant_oi_intelligence.py', '--input', str(normalized), '--history-root', 'data/analysis'])
-        run_agent([sys.executable, 'agents/equity_delivery_strength.py', '--input', str(normalized), '--history-root', 'data/analysis'])
-        futures_command = [sys.executable, 'agents/futures_buildup_intelligence.py', '--input', str(normalized)]
+        try:
+            normalized_payload = normalize_day(EXTRACTED, normalized, daystr)
+        except Exception as exc:
+            result['agent_status']['agent1_normalization'] = {
+                'status': 'failed', 'reason': str(exc)
+            }
+            raise
+        result['agent_status']['agent1_normalization'] = {
+            'status': 'passed',
+            'observed_trading_dates': normalized_payload.get('observed_trading_dates', []),
+            'date_consistency': normalized_payload.get('date_consistency'),
+            'report_rows': {
+                key: sum(item.get('row_count', 0) for item in files)
+                for key, files in normalized_payload.get('reports', {}).items()
+            },
+        }
+        run_agent_recorded(result, 'agent2_participant_oi', [
+            sys.executable, 'agents/participant_oi_intelligence.py',
+            '--input', str(normalized), '--history-root', 'data/analysis'
+        ])
+        run_agent_recorded(result, 'agent3_equity_delivery', [
+            sys.executable, 'agents/equity_delivery_strength.py',
+            '--input', str(normalized), '--history-root', 'data/analysis'
+        ])
+        futures_command = [
+            sys.executable, 'agents/futures_buildup_intelligence.py',
+            '--input', str(normalized)
+        ]
         if needs_prior_session_close(normalized):
-            prior_payload = fetch_previous_fo_payload(day, session)
+            try:
+                prior_payload = fetch_previous_fo_payload(day, session)
+            except Exception as exc:
+                result['agent_status']['agent4_futures_buildup'] = {
+                    'status': 'failed', 'reason': f'Prior-session same-contract close retrieval failed: {exc}'
+                }
+                raise
             prior_input = Path('data/normalized') / daystr / 'previous_session_fo.json'
             prior_input.parent.mkdir(parents=True, exist_ok=True)
-            prior_input.write_text(json.dumps(prior_payload, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+            prior_input.write_text(
+                json.dumps(prior_payload, indent=2, ensure_ascii=False) + '\\n',
+                encoding='utf-8'
+            )
             futures_command.extend(['--previous-input', str(prior_input)])
-        run_agent(futures_command)
-        run_agent([sys.executable, 'agents/nifty_option_oi_intelligence.py', '--input', str(normalized)])
-        run_agent([sys.executable, 'agents/eod_market_confluence_intelligence.py', '--date', daystr, '--analysis-root', 'data/analysis'])
+        run_agent_recorded(result, 'agent4_futures_buildup', futures_command)
+        run_agent_recorded(result, 'agent5_nifty_option_oi', [
+            sys.executable, 'agents/nifty_option_oi_intelligence.py',
+            '--input', str(normalized)
+        ])
+        run_agent_recorded(result, 'agent6_eod_market_confluence', [
+            sys.executable, 'agents/eod_market_confluence_intelligence.py',
+            '--date', daystr, '--analysis-root', 'data/analysis'
+        ])
         result['status'] = 'passed'
     except Exception as exc:
         result['error'] = str(exc)
@@ -223,11 +280,38 @@ def main() -> int:
             summary['passed_days'].append(current.isoformat())
         else:
             summary['skipped_or_failed_days'].append({'date': current.isoformat(), 'reason': item.get('error', 'unknown')})
-    for daystr in summary['passed_days']: compact_snapshots(daystr)
+    preserve_full_agent_snapshots = bool(args.dates)
+    summary['agent_evidence_retention'] = (
+        'full_per_agent_snapshots' if preserve_full_agent_snapshots else 'compact_range_backfill'
+    )
+    if should_compact_snapshots(preserve_full_agent_snapshots):
+        for daystr in summary['passed_days']:
+            compact_snapshots(daystr)
     if summary['passed_days']:
         run_agent([sys.executable, 'agents/walk_forward_validation.py', '--analysis-root', 'data/analysis',
                    '--output', 'data/backfill/walk_forward_validation.json',
                    '--minimum-samples', str(args.minimum_samples)])
+        validation_path = Path('data/backfill/walk_forward_validation.json')
+        validation = json.loads(validation_path.read_text(encoding='utf-8'))
+        metrics = validation.get('metrics', {})
+        summary['agent7_validation'] = {
+            'status': validation.get('status'),
+            'samples': metrics.get('samples'),
+            'minimum_samples_required': validation.get('minimum_samples_required'),
+            'accuracy': metrics.get('accuracy'),
+            'balanced_accuracy': metrics.get('balanced_accuracy'),
+            'macro_f1': metrics.get('macro_f1'),
+            'directional_accuracy': metrics.get('directional_accuracy'),
+            'confusion_matrix': metrics.get('confusion_matrix_actual_rows_predicted_columns'),
+            'by_agent6_confidence_grade': metrics.get('by_agent6_confidence_grade'),
+            'target_definition': validation.get('target_definition'),
+        }
+    else:
+        summary['agent7_validation'] = {
+            'status': 'not_run', 'samples': 0,
+            'minimum_samples_required': args.minimum_samples,
+            'reason': 'No requested trading date completed Agents 1–6 successfully.'
+        }
     out = Path('data/backfill/backfill_summary.json')
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(summary, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
