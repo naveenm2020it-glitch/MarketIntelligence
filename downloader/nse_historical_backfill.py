@@ -206,11 +206,47 @@ def compact_snapshots(day: str) -> None:
         payload['underlyings'] = [x for x in payload.get('underlyings', [])
                                   if x.get('symbol') == 'NIFTY' and x.get('instrument_type') == 'FUTIDX']
         future.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
-    # Agent 6 contains the combined daily evidence. Keep its snapshot and the
-    # compact NIFTY futures contracts required by Agent 7; discard bulky intermediates.
-    for name in ('participant_oi_intelligence.json', 'delivery_strength.json', 'nifty_option_oi_intelligence.json'):
-        p = folder / name
-        if p.exists(): p.unlink()
+
+    # Keep compact Agent 2/3 comparison snapshots. The next session uses these
+    # to calculate changes vs the actual previous NSE session; deleting them
+    # forces repeated archive downloads and loses durable daily comparisons.
+    participant = folder / 'participant_oi_intelligence.json'
+    if participant.exists():
+        source = json.loads(participant.read_text(encoding='utf-8'))
+        compact = {
+            'schema_version': source.get('schema_version', 1),
+            'agent': source.get('agent'),
+            'status': source.get('status'),
+            'data_scope': source.get('data_scope'),
+            'trading_date': source.get('trading_date'),
+            'comparison_date': source.get('comparison_date'),
+            'participants': source.get('participants', {}),
+        }
+        participant.write_text(json.dumps(compact, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+
+    delivery = folder / 'delivery_strength.json'
+    if delivery.exists():
+        source = json.loads(delivery.read_text(encoding='utf-8'))
+        compact = {
+            'schema_version': source.get('schema_version', 1),
+            'agent': source.get('agent'),
+            'status': source.get('status'),
+            'data_scope': source.get('data_scope'),
+            'trading_date': source.get('trading_date'),
+            'comparison_date': source.get('comparison_date'),
+            'stocks': [
+                {key: row.get(key) for key in ('symbol', 'delivery_quantity', 'delivery_percentage')}
+                for row in source.get('stocks', [])
+            ],
+        }
+        delivery.write_text(json.dumps(compact, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+
+    # Agent 6 contains combined option-chain and market-confluence evidence.
+    # Keep its output and compact NIFTY FUTIDX contracts; discard only bulky
+    # option-chain intermediates that are not needed for historical comparisons.
+    option_oi = folder / 'nifty_option_oi_intelligence.json'
+    if option_oi.exists():
+        option_oi.unlink()
 
 def backfill_exit_code(summary: dict, require_all_dates: bool = False) -> int:
     if not summary.get('passed_days'):
