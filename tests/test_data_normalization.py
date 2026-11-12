@@ -99,4 +99,39 @@ class NormalizationTests(unittest.TestCase):
             (root/"2026-11-11"/"fo_udiff"/"file.csv").unlink()
             with self.assertRaises(ValueError): normalize_day(root,out,"2026-11-11")
 
+    def test_report_trading_date_is_independent_of_ingestion_folder_date(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d) / "extracted"
+            output = Path(d) / "normalized" / "2026-11-11" / "normalized.json"
+            ingest_date = "2026-11-12"
+            reports = {
+                "equity_udiff": [
+                    ["TradDt", "TckrSymb", "ClsPric"],
+                    ["2026-11-11", "ABC", "123"],
+                ],
+                "fo_udiff": [
+                    ["TradDt", "TckrSymb", "ClsPric"],
+                    ["2026-11-11", "NIFTY", "25000"],
+                ],
+                "participant_oi": [
+                    ["Client Type", "Future Index Long", "Total Short Contracts"],
+                    ["FII", "10", "4"],
+                ],
+                "security_delivery": [
+                    ["SYMBOL", "DATE1", "DELIVQTY", "DELIVPER"],
+                    ["ABC", "11-Nov-2026", "50", "25"],
+                ],
+            }
+            for report, rows in reports.items():
+                self.write(root / ingest_date / report / "file.csv", rows)
+
+            result = normalize_day(root, output, "2026-11-11", source_date=ingest_date)
+            self.assertEqual(result["status"], "passed")
+            self.assertEqual(result["requested_date"], "2026-11-11")
+            self.assertEqual(result["source_directory_date"], ingest_date)
+            self.assertEqual(result["observed_trading_dates"], ["2026-11-11"])
+
+            with self.assertRaisesRegex(ValueError, "expected_trading_date=2026-11-12"):
+                normalize_day(root, output, "2026-11-12", source_date=ingest_date)
+
 if __name__ == "__main__": unittest.main()

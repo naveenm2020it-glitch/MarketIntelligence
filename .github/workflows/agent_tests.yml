@@ -27,6 +27,8 @@ jobs:
           python-version: '3.12'
       - name: Install test dependencies
         run: python -m pip install -r requirements.txt
+      - name: Compile Python sources
+        run: python -m compileall -q agents downloader tests
       - name: Run unit tests
         run: python -m unittest discover -s tests -v
   normalize-latest-nse-day:
@@ -41,24 +43,62 @@ jobs:
         run: python -m pip install -r requirements.txt
       - name: Download and validate NSE reports
         run: python downloader/nse_downloader.py
-      - name: Normalize reports using actual NSE CSVs
+      - name: Resolve actual NSE trading date
         run: |
-          DATE="$(TZ=Asia/Kolkata date +%Y-%m-%d)"
-          python agents/data_normalization.py --date "$DATE"
+          RUN_DATE="$(TZ=Asia/Kolkata date +%Y-%m-%d)"
+          python - "$RUN_DATE" <<'PY'
+          import json
+          import os
+          import sys
+          from datetime import datetime
+          from pathlib import Path
+
+          run_date = sys.argv[1]
+          summary_path = Path("logs") / f"nse_summary_{run_date}.json"
+          if not summary_path.is_file():
+              raise SystemExit(f"NSE downloader summary is missing: {summary_path}")
+          summary = json.loads(summary_path.read_text(encoding="utf-8"))
+          report_dates = summary.get("report_trading_dates") or {}
+          required = ("equity_udiff", "fo_udiff", "participant_oi", "security_delivery")
+          missing = [name for name in required if not report_dates.get(name)]
+          if missing:
+              raise SystemExit(f"Actual NSE trading dates are missing for reports: {missing}")
+
+          def to_iso(value):
+              value = str(value).strip()
+              for fmt in ("%Y-%m-%d", "%d-%b-%Y", "%d-%B-%Y", "%d/%m/%Y"):
+                  try:
+                      return datetime.strptime(value, fmt).date().isoformat()
+                  except ValueError:
+                      pass
+              raise SystemExit(f"Unrecognized NSE trading date: {value!r}")
+
+          resolved = {name: to_iso(report_dates[name]) for name in required}
+          unique_dates = sorted(set(resolved.values()))
+          if len(unique_dates) != 1:
+              raise SystemExit(f"NSE reports disagree on trading date: {resolved}")
+          trading_date = unique_dates[0]
+          with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as env:
+              env.write("RUN_DATE=" + run_date + chr(10))
+              env.write("TRADING_DATE=" + trading_date + chr(10))
+          print(f"Download folder date: {run_date}")
+          print(f"Verified NSE report trading date: {trading_date}")
+          PY
+      - name: Normalize reports using verified trading date
+        run: python agents/data_normalization.py --date "$TRADING_DATE" --source-date "$RUN_DATE"
       - name: Run Agent 2 — FII/DII Participant OI Intelligence
-        run: python agents/participant_oi_intelligence.py --input "data/normalized/$(TZ=Asia/Kolkata date +%Y-%m-%d)/normalized.json" --history-root data/analysis
+        run: python agents/participant_oi_intelligence.py --input "data/normalized/$TRADING_DATE/normalized.json" --history-root data/analysis
       - name: Run Agent 3 — Equity Delivery Strength Intelligence
-        run: python agents/equity_delivery_strength.py --input "data/normalized/$(TZ=Asia/Kolkata date +%Y-%m-%d)/normalized.json" --history-root data/analysis
+        run: python agents/equity_delivery_strength.py --input "data/normalized/$TRADING_DATE/normalized.json" --history-root data/analysis
       - name: Run Agent 4 — Futures Buildup Intelligence
-        run: python agents/futures_buildup_intelligence.py --input "data/normalized/$(TZ=Asia/Kolkata date +%Y-%m-%d)/normalized.json"
+        run: python agents/futures_buildup_intelligence.py --input "data/normalized/$TRADING_DATE/normalized.json"
       - name: Run Agent 5 — NIFTY Option OI Support Resistance and Max Pain
-        run: python agents/nifty_option_oi_intelligence.py --input "data/normalized/$(TZ=Asia/Kolkata date +%Y-%m-%d)/normalized.json"
+        run: python agents/nifty_option_oi_intelligence.py --input "data/normalized/$TRADING_DATE/normalized.json"
       - name: Run Agent 6 — EOD Market Direction and Confluence Intelligence
-        run: python agents/eod_market_confluence_intelligence.py --date "$(TZ=Asia/Kolkata date +%Y-%m-%d)" --analysis-root data/analysis
+        run: python agents/eod_market_confluence_intelligence.py --date "$TRADING_DATE" --analysis-root data/analysis
       - name: Run Agent 7 — Chronological Walk-Forward Validation
         run: |
-          DATE="$(TZ=Asia/Kolkata date +%Y-%m-%d)"
-          python agents/walk_forward_validation.py --analysis-root data/analysis --output "data/analysis/$DATE/walk_forward_validation.json"
+          python agents/walk_forward_validation.py --analysis-root data/analysis --output "data/analysis/$TRADING_DATE/walk_forward_validation.json"
       - name: Persist Agent analysis snapshots
         run: |
           git config user.name "github-actions[bot]"
