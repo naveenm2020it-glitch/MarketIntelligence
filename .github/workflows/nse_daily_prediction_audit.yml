@@ -1,0 +1,158 @@
+name: NSE Daily Prediction Audit
+
+on:
+  # Run only after the official daily downloader finishes successfully.
+  workflow_run:
+    workflows: ["NSE Daily Downloader"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      trading_date:
+        description: "Optional exact NSE trading date to process (YYYY-MM-DD); leave blank to use today's verified NSE release"
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: nse-daily-prediction-audit
+  cancel-in-progress: false
+
+jobs:
+  daily-audit:
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' && (github.event.workflow_run.event == 'schedule' || github.event.workflow_run.event == 'workflow_dispatch')) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout latest main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Resolve verified NSE trading date
+        id: session
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          REQUESTED_DATE: ${{ inputs.trading_date }}
+        run: |
+          if [ -n "$REQUESTED_DATE" ]; then
+            python - "$REQUESTED_DATE" >> "$GITHUB_OUTPUT" <<'PY'
+          import sys
+          from datetime import date
+          day = date.fromisoformat(sys.argv[1])
+          if day.weekday() >= 5:
+              raise SystemExit("Weekend date is not an NSE trading session.")
+          print(f"trading_date={day.isoformat()}")
+          PY
+            exit 0
+          fi
+
+          RUN_DATE="$(TZ=Asia/Kolkata date +%Y-%m-%d)"
+          TAG="nse-data-$RUN_DATE"
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            echo "No validated NSE permanent release for $RUN_DATE; likely no published session archive. Daily audit skipped."
+            echo "trading_date=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          mkdir -p /tmp/nse-release
+          gh release download "$TAG" --pattern "nse-market-data-$RUN_DATE.zip" --dir /tmp/nse-release
+          python - "$RUN_DATE" "/tmp/nse-release/nse-market-data-$RUN_DATE.zip" >> "$GITHUB_OUTPUT" <<'PY'
+          import json, sys, zipfile
+          from datetime import date
+          run_date, archive_path = sys.argv[1:]
+          with zipfile.ZipFile(archive_path) as z:
+              matches = [n for n in z.namelist() if n.endswith(f"nse_summary_{run_date}.json")]
+              if len(matches) != 1:
+                  raise SystemExit("Verified NSE archive must contain exactly one daily summary.")
+              summary = json.loads(z.read(matches[0]))
+          expected = {"equity_udiff", "fo_udiff", "participant_oi", "security_delivery"}
+          dates = summary.get("report_trading_dates", {})
+          if summary.get("trading_date_consistency") != "passed" or set(summary.get("reports", {})) != expected or set(dates) != expected:
+              raise SystemExit("NSE release summary does not contain four complete, date-consistent reports.")
+          unique_dates = set(dates.values())
+          if len(unique_dates) != 1:
+              raise SystemExit("NSE report trading dates are inconsistent.")
+          trading_date = unique_dates.pop()
+          parsed = date.fromisoformat(trading_date)
+          if parsed.weekday() >= 5:
+              raise SystemExit("NSE archive reports a weekend trading date; refusing to process.")
+          print(f"trading_date={trading_date}")
+          PY
+
+      - name: Process verified session and replay Agents 2–7
+        if: steps.session.outputs.trading_date != ''
+        env:
+          TRADING_DATE: ${{ steps.session.outputs.trading_date }}
+        run: |
+          python downloader/nse_historical_backfill.py \
+            --dates "$TRADING_DATE" \
+            --minimum-samples 30
+
+      - name: Update permanent daily prediction audit
+        if: steps.session.outputs.trading_date != ''
+        run: |
+          python agents/daily_prediction_audit.py \
+            --analysis-root data/analysis \
+            --validation-report data/backfill/walk_forward_validation.json \
+            --output data/audit/daily_prediction_audit.json \
+            --csv-output data/audit/daily_prediction_audit.csv
+
+      - name: Persist compact daily snapshots and audit ledger to main
+        if: steps.session.outputs.trading_date != ''
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A -- data/analysis data/backfill data/audit
+          if ! git diff --cached --quiet; then
+            git commit -m "data: update daily NSE prediction audit"
+            git pull --rebase origin main
+            git push
+          else
+            echo "No daily audit changes to persist."
+          fi
+
+      - name: Write daily audit summary
+        if: always()
+        run: |
+          {
+            echo "## NSE Daily Prediction Audit"
+            echo "- Trading date: ${{ steps.session.outputs.trading_date || 'No verified NSE session; skipped' }}"
+            echo "- Source: validated NSE public archive only"
+            if [ -f data/audit/daily_prediction_audit.json ]; then
+              python - <<'PY'
+          import json
+          from pathlib import Path
+          data = json.loads(Path("data/audit/daily_prediction_audit.json").read_text())
+          print(f"- Settled predictions: {data.get('settled_count')}")
+          print(f"- Pending predictions: {data.get('pending_count')}")
+          print(f"- Agent 6 accuracy: {data.get('agent6_metrics_all_settled', {}).get('accuracy')}")
+          print(f"- Matched baseline samples: {data.get('matched_comparison', {}).get('samples')}")
+          print(f"- Persistence baseline accuracy: {data.get('matched_comparison', {}).get('persistence_baseline', {}).get('accuracy')}")
+          PY
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload daily audit evidence
+        if: always() && steps.session.outputs.trading_date != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: nse-daily-prediction-audit-${{ github.run_number }}
+          path: |
+            data/analysis/
+            data/backfill/
+            data/audit/
+          if-no-files-found: warn
+          retention-days: 30
