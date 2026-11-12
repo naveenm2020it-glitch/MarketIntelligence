@@ -2,7 +2,7 @@
   "schema_version": 1,
   "agent": "daily_prediction_audit",
   "source": "Agent 7 persisted chronological NSE EOD evidence",
-  "generated_at_utc": "2026-11-12T07:22:38.078158+00:00",
+  "generated_at_utc": "2026-11-12T07:26:59.842766+00:00",
   "validation_status": "insufficient_data",
   "validation_type": "chronological_next_archived_session_out_of_sample",
   "target_definition": {
