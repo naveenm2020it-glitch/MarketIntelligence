@@ -1,0 +1,102 @@
+name: NSE Agent 7 Bounded Walk-Forward Validation
+
+on:
+  workflow_dispatch:
+    inputs:
+      start_date:
+        description: 'Bounded collection start date inclusive (YYYY-MM-DD)'
+        required: true
+        default: '2026-09-16'
+      end_date:
+        description: 'Bounded collection end date inclusive (YYYY-MM-DD)'
+        required: true
+        default: '2026-11-11'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nse-agent7-bounded-validation
+  cancel-in-progress: false
+
+jobs:
+  bounded-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      START_DATE: ${{ inputs.start_date }}
+      END_DATE: ${{ inputs.end_date }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Enforce bounded date window
+        run: |
+          python - <<'PY'
+          import os
+          from datetime import date
+          start = date.fromisoformat(os.environ["START_DATE"])
+          end = date.fromisoformat(os.environ["END_DATE"])
+          span = (end - start).days
+          if span < 1:
+              raise SystemExit("End date must be after start date.")
+          if span > 56:
+              raise SystemExit("This validation workflow is capped at 56 calendar days.")
+          if end > date.today():
+              raise SystemExit("End date cannot be in the future.")
+          weekdays = sum((start.toordinal() + offset) % 7 < 5 for offset in range(span + 1))
+          print(f"Bounded NSE collection: {start} through {end} ({span + 1} calendar days; {weekdays} weekdays maximum before NSE holidays).")
+          PY
+
+      - name: Collect genuine NSE EOD reports and replay Agents 2–6
+        run: |
+          python downloader/nse_historical_backfill.py \
+            --start-date "$START_DATE" \
+            --end-date "$END_DATE" \
+            --minimum-samples 30
+
+      - name: Require at least 30 valid chronological Agent 7 pairs
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = Path("data/backfill/walk_forward_validation.json")
+          if not report.is_file():
+              raise SystemExit("Agent 7 report was not generated; no valid Agent 2–6 history was produced.")
+          data = json.loads(report.read_text(encoding="utf-8"))
+          metrics = data.get("metrics", {})
+          samples = metrics.get("samples", 0)
+          print(json.dumps({
+              "status": data.get("status"),
+              "valid_pairs": samples,
+              "minimum_required": data.get("minimum_samples_required"),
+              "accuracy": metrics.get("accuracy"),
+              "balanced_accuracy": metrics.get("balanced_accuracy"),
+              "macro_f1": metrics.get("macro_f1"),
+              "directional_accuracy": metrics.get("directional_accuracy"),
+              "skipped_pairs": len(data.get("skipped_pairs", [])),
+          }, indent=2))
+          if data.get("status") != "passed" or samples < 30:
+              raise SystemExit("Bounded collection did not produce the required 30 valid pairs. Review the artifact; do not infer or fabricate metrics.")
+          PY
+
+      - name: Upload bounded NSE source data and Agent 7 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nse-agent7-bounded-validation-${{ github.run_number }}
+          path: |
+            data/raw/
+            data/extracted/
+            data/normalized/
+            data/analysis/
+            data/backfill/
+          if-no-files-found: warn
+          retention-days: 30
