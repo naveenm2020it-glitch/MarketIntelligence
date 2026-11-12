@@ -77,13 +77,16 @@ def read_report(path: Path, report: str) -> dict:
     return {"report": report, "source_file": path.name, "header_row": header_i+1,
             "columns": keys, "row_count": len(records), "trading_dates": dates,
             "records": records}
-def normalize_day(root: Path, output: Path, date: str) -> dict:
+def normalize_day(root: Path, output: Path, date: str, source_date: str | None = None) -> dict:
+    datetime.strptime(date, "%Y-%m-%d")
+    source_date = source_date or date
+    datetime.strptime(source_date, "%Y-%m-%d")
     results, failures = {}, {}
     for report in REPORTS:
-        folder = root / date / report
+        folder = root / source_date / report
         candidates = sorted(folder.glob("*.csv")) if folder.exists() else []
         if not candidates:
-            raw_folder = root.parent / "raw" / date / report
+            raw_folder = root.parent / "raw" / source_date / report
             candidates = sorted(raw_folder.glob("*.csv")) if raw_folder.exists() else []
         if not candidates:
             failures[report] = f"No extracted CSV found under {folder}"
@@ -95,25 +98,32 @@ def normalize_day(root: Path, output: Path, date: str) -> dict:
             failures[report] = str(exc)
     all_dates = sorted({d for group in results.values() for item in group for d in item["trading_dates"]})
     status = "passed" if not failures and len(results) == len(REPORTS) else "failed"
+    date_consistency = "passed" if all_dates == [date] else "failed"
     output.parent.mkdir(parents=True, exist_ok=True)
     payload = {"schema_version": 1, "agent": "data_normalization", "status": status,
-               "requested_date": date, "observed_trading_dates": all_dates,
-               "date_consistency": "passed" if len(all_dates) <= 1 else "failed",
+               "requested_date": date, "source_directory_date": source_date,
+               "observed_trading_dates": all_dates, "date_consistency": date_consistency,
                "reports": results, "failures": failures,
                "disclaimer": "This is normalized reported EOD data, not live or intraday data."}
     output.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     if status != "passed" or payload["date_consistency"] != "passed":
-        raise ValueError(f"Normalization failed: {json.dumps(failures)}; dates={all_dates}")
+        raise ValueError(
+            f"Normalization failed: {json.dumps(failures)}; "
+            f"expected_trading_date={date}; observed_dates={all_dates}; "
+            f"source_directory_date={source_date}"
+        )
     return payload
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--date", required=True, help="NSE trading date YYYY-MM-DD")
+    ap.add_argument("--date", required=True, help="Actual NSE trading date YYYY-MM-DD")
+    ap.add_argument("--source-date", default=None,
+                    help="Ingestion folder date YYYY-MM-DD when different from the report trading date")
     ap.add_argument("--input", default="data/extracted")
     ap.add_argument("--output", default=None)
     args = ap.parse_args()
     datetime.strptime(args.date, "%Y-%m-%d")
     output = Path(args.output or f"data/normalized/{args.date}/normalized.json")
-    result = normalize_day(Path(args.input), output, args.date)
+    result = normalize_day(Path(args.input), output, args.date, args.source_date)
     print(json.dumps({"status": result["status"], "reports": len(result["reports"]),
                       "rows": {k: sum(x["row_count"] for x in v) for k,v in result["reports"].items()},
                       "date_consistency": result["date_consistency"], "output": str(output)}, indent=2))
