@@ -7,8 +7,10 @@ on:
       - 'downloader/**'
       - 'tests/**'
       - '.github/workflows/agent_tests.yml'
+      - '.github/workflows/nse_agent7_bounded_validation.yml'
       - '.github/workflows/nse_historical_backfill.yml'
       - '.github/workflows/nse_five_date_pilot.yml'
+      - '.github/workflows/nse_agent7_bounded_validation.yml'
   pull_request:
     paths:
       - 'agents/**'
