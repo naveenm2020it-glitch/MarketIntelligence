@@ -2,58 +2,58 @@
   "source": "NSE public historical archives",
   "mode": "exact_dates",
   "requested_dates": [
-    "2026-11-11"
+    "2026-11-12"
   ],
-  "start_date": "2026-11-11",
-  "end_date": "2026-11-11",
+  "start_date": "2026-11-12",
+  "end_date": "2026-11-12",
   "trading_days_attempted": 1,
   "passed_days": [
-    "2026-11-11"
+    "2026-11-12"
   ],
   "skipped_or_failed_days": [],
   "results": [
     {
-      "date": "2026-11-11",
+      "date": "2026-11-12",
       "reports": {
         "equity_udiff": {
           "report": "equity_udiff",
-          "url": "https://nsearchives.nseindia.com/content/cm/BhavCopy_NSE_CM_0_0_0_20261111_F_0000.csv.zip",
-          "bytes": 211595,
-          "saved_as": "data/raw/2026-11-11/equity_udiff/equity_udiff.zip",
-          "sha256": "f9f1647d3b74143465f23cb1310b2e774328d15a9448501382f1c199aa476807",
+          "url": "https://nsearchives.nseindia.com/content/cm/BhavCopy_NSE_CM_0_0_0_20261112_F_0000.csv.zip",
+          "bytes": 208828,
+          "saved_as": "data/raw/2026-11-12/equity_udiff/equity_udiff.zip",
+          "sha256": "b28a71c49f757ceff661093fd308ef6e49740ea583c9fb214f836a3b011e0652",
           "validation": "passed",
           "csv_files": 1,
-          "rows": 3774
+          "rows": 3727
         },
         "fo_udiff": {
           "report": "fo_udiff",
-          "url": "https://nsearchives.nseindia.com/content/fo/BhavCopy_NSE_FO_0_0_0_20261111_F_0000.csv.zip",
-          "bytes": 1359173,
-          "saved_as": "data/raw/2026-11-11/fo_udiff/fo_udiff.zip",
-          "sha256": "e7ab0ec53ac7b3bb7bcf36b575ca06ca290b8a0c699deab9231c22b34bd296c2",
+          "url": "https://nsearchives.nseindia.com/content/fo/BhavCopy_NSE_FO_0_0_0_20261112_F_0000.csv.zip",
+          "bytes": 1368767,
+          "saved_as": "data/raw/2026-11-12/fo_udiff/fo_udiff.zip",
+          "sha256": "79285823ee47f0e6406e0a69c544071178d2337e6538ae32b0f9b1b94530f9b3",
           "validation": "passed",
           "csv_files": 1,
-          "rows": 42331
+          "rows": 42967
         },
         "participant_oi": {
           "report": "participant_oi",
-          "url": "https://nsearchives.nseindia.com/content/nsccl/fao_participant_oi_11112026.csv",
-          "bytes": 984,
-          "saved_as": "data/raw/2026-11-11/participant_oi/participant_oi.csv",
-          "sha256": "e1cc6359cebdf09fac73e9bf143cdabb1d84187c44b340843ef2b02a18ee5f4a",
+          "url": "https://nsearchives.nseindia.com/content/nsccl/fao_participant_oi_12112026.csv",
+          "bytes": 985,
+          "saved_as": "data/raw/2026-11-12/participant_oi/participant_oi.csv",
+          "sha256": "d93de1831c04cd38971f47c8e7b2a1ef33a16c878c283a15be2e0122f73043c9",
           "validation": "passed",
           "csv_files": 1,
           "rows": 5
         },
         "security_delivery": {
           "report": "security_delivery",
-          "url": "https://nsearchives.nseindia.com/products/content/sec_bhavdata_full_11112026.csv",
-          "bytes": 406680,
-          "saved_as": "data/raw/2026-11-11/security_delivery/security_delivery.csv",
-          "sha256": "d83003c4c46a2c9765b2c54d941ab95f5c64e779b3cb20790a4a9ac68d21a85a",
+          "url": "https://nsearchives.nseindia.com/products/content/sec_bhavdata_full_12112026.csv",
+          "bytes": 404035,
+          "saved_as": "data/raw/2026-11-12/security_delivery/security_delivery.csv",
+          "sha256": "353e958e149f082b915b7f1844a7ba7cf0e535db0d6329c3e0c24d2928974b04",
           "validation": "passed",
           "csv_files": 1,
-          "rows": 3583
+          "rows": 3566
         }
       },
       "status": "passed"
