@@ -109,13 +109,24 @@ def run(dataset_dir, output_dir, model_path):
     if min(len(ytr), len(yv), len(yt)) < 20 or len(set(ytr)) < 2:
         raise ValueError("Insufficient rows/classes for time-series model evaluation")
 
-    missing = {col: int(np.isnan(xtr[:, i]).sum()) for i, col in enumerate(cols)}
+    # Preserve the full feature matrix for the independent Agent 6 comparison.
+    full_cols = list(cols)
+    xv_full, xt_full = xv.copy(), xt.copy()
+    missing = {col: int(np.isnan(xtr[:, i]).sum()) for i, col in enumerate(full_cols)}
     all_missing = [col for col, count in missing.items() if count == len(ytr)]
     constant = []
-    for i, col in enumerate(cols):
+    keep_indices = []
+    for i, col in enumerate(full_cols):
         observed = xtr[:, i][~np.isnan(xtr[:, i])]
         if len(observed) and len(np.unique(observed)) <= 1:
             constant.append(col)
+        if len(observed) and len(np.unique(observed)) > 1:
+            keep_indices.append(i)
+    excluded = sorted(set(all_missing) | set(constant))
+    if not keep_indices:
+        raise ValueError("All features are missing or constant in the training partition")
+    xtr, xv, xt = xtr[:, keep_indices], xv[:, keep_indices], xt[:, keep_indices]
+    cols = [full_cols[i] for i in keep_indices]
 
     splitter = TimeSeriesSplit(n_splits=4)
     cv_report, candidates = {}, {}
@@ -145,8 +156,8 @@ def run(dataset_dir, output_dir, model_path):
     test_predictions = holdout.predict(xt)
     test_metrics = metrics(yt, test_predictions)
     validation_predictions = candidates[selected]["model"].predict(xv)
-    validation_agent6 = agent6_labels(xv, cols)
-    test_agent6 = agent6_labels(xt, cols)
+    validation_agent6 = agent6_labels(xv_full, full_cols)
+    test_agent6 = agent6_labels(xt_full, full_cols)
     hybrid_validation = ensemble_diagnostics(yv, validation_predictions, validation_agent6)
     hybrid_test = ensemble_diagnostics(yt, test_predictions, test_agent6)
     majority = max(set(ytr), key=list(ytr).count)
@@ -173,11 +184,15 @@ def run(dataset_dir, output_dir, model_path):
         "agent6_ml_hybrid_backtest": {"validation": hybrid_validation, "final_holdout_test": hybrid_test},
         "rows": {"train": len(ytr), "validation": len(yv), "test": len(yt), "model_refit_after_test": len(all_y)},
         "date_ranges": {"train": [dtr[0], dtr[-1]], "validation": [dv[0], dv[-1]], "test": [dt[0], dt[-1]]},
+        "source_feature_count": len(full_cols),
         "feature_count": len(cols),
+        "excluded_feature_count": len(excluded),
+        "excluded_features": excluded,
         "class_counts": {label: int(np.sum(all_y == label)) for label in LABELS},
         "data_quality": {"features_with_missing_values_in_train": sum(v > 0 for v in missing.values()),
             "all_missing_features_in_train": all_missing, "constant_features_in_train": constant,
-            "missing_counts_by_feature": missing},
+            "missing_counts_by_feature": missing,
+            "selection_rule": "Drop features that are all-missing or constant in the training partition only; apply the same retained columns to validation and test."},
         "preprocessing": {"imputation": "Median imputer fitted inside each training fold and final pipeline.",
             "scaling": "StandardScaler fitted inside Logistic Regression pipeline only; tree models are not scaled.",
             "leakage_control": "Chronological partitions, no shuffle; validation for selection; test used once."},
@@ -188,7 +203,8 @@ def run(dataset_dir, output_dir, model_path):
     }
     (output_dir / "training_report.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({"status": report["status"], "live_prediction_enabled": False,
-        "selected_model": selected, "rows": report["rows"], "feature_count": len(cols),
+        "selected_model": selected, "rows": report["rows"], "source_feature_count": len(full_cols),
+        "feature_count": len(cols), "excluded_features": excluded,
         "cv_mean_macro_f1": {k: v["mean_macro_f1"] for k, v in cv_report.items()},
         "validation": report["validation"], "final_holdout_test": test_metrics,
         "agent6_ml_hybrid_validation": hybrid_validation,
