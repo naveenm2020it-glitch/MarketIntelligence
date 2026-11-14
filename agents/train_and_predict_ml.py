@@ -145,7 +145,9 @@ def run(dataset_dir: Path, analysis_root: Path, output_dir: Path, model_path: Pa
     probability_map = {label: 0.0 for label in LABELS}
     for label, probability in zip(production_model.classes_, probabilities):
         probability_map[str(label)] = round(float(probability), 4)
-    prediction = max(probability_map, key=probability_map.get)
+    raw_prediction = max(probability_map, key=probability_map.get)
+    ranked_scores = sorted(probability_map.values(), reverse=True)
+    score_margin = ranked_scores[0] - ranked_scores[1]
     next_weekday = expected_next_weekday(signal_day)
 
     validation_best = candidates[selected]["validation"]
@@ -153,6 +155,14 @@ def run(dataset_dir: Path, analysis_root: Path, output_dir: Path, model_path: Pa
     majority_validation = [majority] * len(y_val)
     majority_f1 = float(f1_score(y_val, majority_validation, labels=list(LABELS), average="macro", zero_division=0))
     has_validation_edge = validation_best["macro_f1"] > majority_f1
+    # Do not publish a directional call when holdout skill is weak or class scores are tied.
+    model_readiness = "research_only" if test_metrics["macro_f1"] < 0.40 or not has_validation_edge else "experimental"
+    has_directional_edge = (
+        model_readiness == "experimental"
+        and probability_map[raw_prediction] >= 0.45
+        and score_margin >= 0.08
+    )
+    prediction = raw_prediction if has_directional_edge else "no_clear_edge"
 
     output_dir.mkdir(parents=True, exist_ok=True)
     model_path.parent.mkdir(parents=True, exist_ok=True)
@@ -195,8 +205,18 @@ def run(dataset_dir: Path, analysis_root: Path, output_dir: Path, model_path: Pa
         "expected_next_weekday": next_weekday.isoformat(),
         "target_session_note": "Expected weekday only; confirm NSE holiday calendar.",
         "prediction": prediction,
+        "leading_class": raw_prediction,
         "class_scores": probability_map,
-        "top_class_score": probability_map[prediction],
+        "top_class_score": probability_map[raw_prediction],
+        "top_two_score_margin": round(score_margin, 4),
+        "model_readiness": model_readiness,
+        "decision_reason": (
+            "No directional edge: holdout performance is below the 0.40 macro-F1 readiness threshold."
+            if model_readiness == "research_only"
+            else "No directional edge: leading class score or margin is below the decision threshold."
+            if not has_directional_edge
+            else "Experimental direction passed the baseline and score-margin gates."
+        ),
         "selected_model": selected,
         "validation_edge_over_majority_baseline": has_validation_edge,
         "validation_macro_f1": validation_best["macro_f1"],
