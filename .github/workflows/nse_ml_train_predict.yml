@@ -1,89 +1,16 @@
-name: NSE ML Model Train and Next-Session Forecast
+name: Legacy NSE ML Forecast (Paused)
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'agents/train_and_predict_ml.py'
-      - 'agents/build_ml_training_dataset.py'
-      - '.github/workflows/nse_ml_train_predict.yml'
-      - 'requirements.txt'
-      - 'tests/test_ml_training.py'
   workflow_dispatch:
-  schedule:
-    # Sunday 20:00 Asia/Kolkata: prepare the Monday forecast from the latest persisted EOD snapshots.
-    - cron: "30 14 * * 0"
-  workflow_run:
-    workflows: ["NSE Daily Prediction Audit"]
-    types: [completed]
-    branches: [main]
 
 permissions:
-  contents: write
-  actions: read
-
-concurrency:
-  group: nse-ml-train-predict
-  cancel-in-progress: false
+  contents: read
 
 jobs:
-  train-and-predict:
-    if: github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
+  paused:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
     steps:
-      - name: Checkout latest main
-        uses: actions/checkout@v4
-        with:
-          ref: main
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-          cache: pip
-
-      - name: Install dependencies
-        run: python -m pip install -r requirements.txt
-
-      - name: Run project tests
-        run: python -m unittest discover -s tests -p 'test_*.py'
-
-      - name: Build leakage-safe dataset from existing snapshots
+      - name: Forecast is intentionally paused
         run: |
-          python agents/build_ml_training_dataset.py \
-            --analysis-root data/analysis \
-            --output data/ml_dataset \
-            --minimum-samples 100
-
-      - name: Train, evaluate and create next-session forecast
-        run: |
-          python agents/train_and_predict_ml.py \
-            --dataset-dir data/ml_dataset \
-            --analysis-root data/analysis \
-            --output-dir data/ml_predictions \
-            --model-path artifacts/nse_direction_model.joblib
-
-      - name: Persist compact forecast and evaluation
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/ml_predictions/latest.json data/ml_predictions/model_evaluation.json
-          if ! git diff --cached --quiet; then
-            git commit -m "ml: publish experimental next-session NSE forecast"
-            git pull --rebase origin main
-            git push
-          else
-            echo "Forecast and evaluation are unchanged."
-          fi
-
-      - name: Upload model and evaluation evidence
-        uses: actions/upload-artifact@v4
-        with:
-          name: nse-ml-model-forecast
-          path: |
-            artifacts/nse_direction_model.joblib
-            data/ml_dataset/
-            data/ml_predictions/
-          if-no-files-found: error
-          retention-days: 14
+          echo "Automatic and manual forecast generation is paused while ML and AI preparation is in progress."
+          echo "Use the NSE ML Model Training workflow for training and validation only."
