@@ -58,6 +58,47 @@ def metrics(y_true, y_pred):
             "f1": round(float(c), 4), "support": int(n)} for label, a, b, c, n in zip(LABELS, p, r, f, support)}
     }
 
+def agent6_labels(x, columns):
+    """Recover the same-day rule-based Agent 6 label from its one-hot dataset fields."""
+    mapping = {
+        "agent6_direction_bearish": "bearish",
+        "agent6_direction_neutral_or_mixed": "neutral",
+        "agent6_direction_bullish": "bullish",
+        "agent6_direction_insufficient_data": "neutral",
+    }
+    indices = {key: columns.index(key) for key in mapping if key in columns}
+    if not indices:
+        raise ValueError("Dataset lacks Agent 6 direction features for hybrid evaluation")
+    labels = []
+    for row in x:
+        active = [label for key, label in mapping.items()
+                  if key in indices and row[indices[key]] >= 0.5]
+        labels.append(active[0] if len(active) == 1 else "neutral")
+    return np.asarray(labels)
+
+
+def consensus_labels(ml_labels, agent6):
+    # Fixed, conservative rule decided before viewing holdout results:
+    # publish a direction only when the independent ML and rule-based Agent 6 agree.
+    return np.asarray([
+        ml if ml == rule and ml in ("bullish", "bearish") else "neutral"
+        for ml, rule in zip(ml_labels, agent6)
+    ])
+
+
+def ensemble_diagnostics(y_true, ml_labels, agent6):
+    consensus = consensus_labels(ml_labels, agent6)
+    agreement = np.asarray(ml_labels) == np.asarray(agent6)
+    return {
+        "ml_only": metrics(y_true, ml_labels),
+        "agent6_rule_only": metrics(y_true, agent6),
+        "conservative_ml_agent6_consensus": metrics(y_true, consensus),
+        "consensus_agreement_coverage": round(float(np.mean(agreement)), 4),
+        "directional_output_coverage": round(float(np.mean(np.isin(consensus, ["bullish", "bearish"]))), 4),
+        "rule": "Emit bullish/bearish only when ML and Agent 6 agree on that direction; otherwise neutral/abstain.",
+    }
+
+
 def run(dataset_dir, output_dir, model_path):
     dataset_dir, output_dir, model_path = Path(dataset_dir), Path(output_dir), Path(model_path)
     xtr, ytr, dtr, cols = load_split(dataset_dir / "train.csv")
@@ -101,7 +142,13 @@ def run(dataset_dir, output_dir, model_path):
     xtrv, ytrv = np.concatenate([xtr, xv]), np.concatenate([ytr, yv])
     holdout = make_pipeline(selected)
     holdout.fit(xtrv, ytrv)
-    test_metrics = metrics(yt, holdout.predict(xt))
+    test_predictions = holdout.predict(xt)
+    test_metrics = metrics(yt, test_predictions)
+    validation_predictions = candidates[selected]["model"].predict(xv)
+    validation_agent6 = agent6_labels(xv, cols)
+    test_agent6 = agent6_labels(xt, cols)
+    hybrid_validation = ensemble_diagnostics(yv, validation_predictions, validation_agent6)
+    hybrid_test = ensemble_diagnostics(yt, test_predictions, test_agent6)
     majority = max(set(ytr), key=list(ytr).count)
     val_baseline = metrics(yv, np.asarray([majority] * len(yv)))
     test_baseline = metrics(yt, np.asarray([majority] * len(yt)))
@@ -123,6 +170,7 @@ def run(dataset_dir, output_dir, model_path):
         "cross_validation": cv_report, "validation": candidates[selected]["validation"],
         "validation_majority_baseline": val_baseline, "final_holdout_test": test_metrics,
         "test_majority_baseline": test_baseline,
+        "agent6_ml_hybrid_backtest": {"validation": hybrid_validation, "final_holdout_test": hybrid_test},
         "rows": {"train": len(ytr), "validation": len(yv), "test": len(yt), "model_refit_after_test": len(all_y)},
         "date_ranges": {"train": [dtr[0], dtr[-1]], "validation": [dv[0], dv[-1]], "test": [dt[0], dt[-1]]},
         "feature_count": len(cols),
