@@ -174,6 +174,27 @@ jobs:
             echo "No daily audit changes to persist."
           fi
 
+      - name: Refresh ML training dataset from the updated daily snapshots
+        if: steps.session.outputs.trading_date != ''
+        run: |
+          python agents/build_ml_training_dataset.py \
+            --analysis-root data/analysis \
+            --output data/ml_dataset \
+            --minimum-samples 30
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          from pathlib import Path
+          manifest = json.loads(Path("data/ml_dataset/manifest.json").read_text())
+          print("## Refreshed ML training dataset")
+          print(f"- Status: {manifest.get('status')}")
+          print(f"- Rows: {manifest.get('rows')}")
+          print(f"- Features: {manifest.get('feature_count')}")
+          for name, split in manifest.get("split", {}).items():
+              print(f"- {name.title()}: {split.get('rows')} rows ({split.get('start_signal_date')} to {split.get('end_signal_date')})")
+          print(f"- Classes: {manifest.get('class_counts')}")
+          print("- Model training: not run; dataset refresh only")
+          PY
+
       - name: Write daily audit summary
         if: always()
         run: |
@@ -204,5 +225,6 @@ jobs:
             data/analysis/
             data/backfill/
             data/audit/
+            data/ml_dataset/
           if-no-files-found: warn
-          retention-days: 30
+          retention-days: 14
