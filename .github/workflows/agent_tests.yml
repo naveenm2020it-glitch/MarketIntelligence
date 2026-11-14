@@ -34,7 +34,8 @@ jobs:
       - name: Run unit tests
         run: python -m unittest discover -s tests -v
   normalize-latest-nse-day:
-    if: github.event_name != 'pull_request'
+    # Never download fresh NSE data just because ML/agent code was pushed; run only on explicit manual request.
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
