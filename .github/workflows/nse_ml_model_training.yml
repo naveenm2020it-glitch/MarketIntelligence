@@ -1,0 +1,72 @@
+name: NSE ML Model Training and Validation
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Sunday 20:00 IST; training and evaluation only, no forecast.
+    - cron: "30 14 * * 0"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nse-ml-model-training
+  cancel-in-progress: false
+
+jobs:
+  train-and-validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Run project tests
+        run: python -m unittest discover -s tests -p 'test_*.py'
+      - name: Build dataset from existing snapshots only
+        run: |
+          python agents/build_ml_training_dataset.py \
+            --analysis-root data/analysis \
+            --output data/ml_dataset \
+            --minimum-samples 100
+      - name: Train and validate candidate models
+        run: |
+          python agents/train_ml_models.py \
+            --dataset-dir data/ml_dataset \
+            --output-dir data/ml_training \
+            --model-path artifacts/nse_direction_model.joblib
+      - name: Upload training evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: nse-ml-training-validation
+          path: |
+            data/ml_dataset/
+            data/ml_training/
+            artifacts/nse_direction_model.joblib
+          if-no-files-found: error
+          retention-days: 14
+      - name: Write training summary
+        if: always()
+        run: |
+          if [ -f data/ml_training/training_report.json ]; then
+            python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          from pathlib import Path
+          r=json.loads(Path("data/ml_training/training_report.json").read_text())
+          print("## ML training and validation (no forecast)")
+          print(f"- Selected model: {r['selected_model']}")
+          print(f"- Rows: {r['rows']}")
+          print(f"- Features: {r['feature_count']}")
+          print(f"- Validation macro-F1: {r['validation']['macro_f1']}")
+          print(f"- Final holdout test macro-F1: {r['final_holdout_test']['macro_f1']}")
+          print(f"- Live prediction enabled: {r['live_prediction_enabled']}")
+          PY
+          else
+            echo "Training report was not created." >> "$GITHUB_STEP_SUMMARY"
+          fi
