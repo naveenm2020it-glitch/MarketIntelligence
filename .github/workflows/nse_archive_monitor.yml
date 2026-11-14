@@ -1,9 +1,6 @@
 name: NSE Archive and Schedule Monitor
 
 on:
-  push:
-    paths:
-      - '.github/workflows/nse_archive_monitor.yml'
   workflow_dispatch:
     inputs:
       check_mode:
@@ -15,8 +12,8 @@ on:
         default: archive-only
         required: true
   schedule:
-    # 17:50 Asia/Kolkata, Monday-Friday; downloader is scheduled for 17:00 IST.
-    - cron: "20 12 * * 1-5"
+    # 20:50 Asia/Kolkata, Monday-Friday; downloader is scheduled for 20:00 IST.
+    - cron: "20 15 * * 1-5"
 
 permissions:
   contents: read
