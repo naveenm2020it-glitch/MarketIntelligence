@@ -1,6 +1,14 @@
 name: NSE ML Model Train and Next-Session Forecast
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'agents/train_and_predict_ml.py'
+      - 'agents/build_ml_training_dataset.py'
+      - '.github/workflows/nse_ml_train_predict.yml'
+      - 'requirements.txt'
+      - 'tests/test_ml_training.py'
   workflow_dispatch:
   schedule:
     # Sunday 20:00 Asia/Kolkata: prepare the Monday forecast from the latest persisted EOD snapshots.
