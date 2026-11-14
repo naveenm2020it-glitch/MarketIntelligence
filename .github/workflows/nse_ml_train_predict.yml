@@ -20,13 +20,7 @@ concurrency:
 
 jobs:
   train-and-predict:
-    if: >-
-      \${{
-        github.event_name == 'workflow_dispatch' ||
-        github.event_name == 'schedule' ||
-        (github.event.workflow_run.conclusion == 'success' &&
-         github.event.workflow_run.head_branch == 'main')
-      }}
+    if: github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -78,7 +72,7 @@ jobs:
       - name: Upload model and evaluation evidence
         uses: actions/upload-artifact@v4
         with:
-          name: nse-ml-model-forecast-\${{ github.run_number }}
+          name: nse-ml-model-forecast
           path: |
             artifacts/nse_direction_model.joblib
             data/ml_dataset/
