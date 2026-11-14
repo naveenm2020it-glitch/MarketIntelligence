@@ -1,6 +1,12 @@
 name: NSE ML Model Training and Validation
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'agents/train_ml_models.py'
+      - '.github/workflows/nse_ml_model_training.yml'
+      - 'tests/test_ml_model_training.py'
   workflow_dispatch:
   schedule:
     # Sunday 20:00 IST; training and evaluation only, no forecast.
