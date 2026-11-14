@@ -3,13 +3,17 @@
   "signal_date": "2026-11-13",
   "expected_next_weekday": "2026-11-16",
   "target_session_note": "Expected weekday only; confirm NSE holiday calendar.",
-  "prediction": "bearish",
+  "prediction": "no_clear_edge",
+  "leading_class": "bearish",
   "class_scores": {
     "bearish": 0.3446,
     "neutral": 0.3117,
     "bullish": 0.3437
   },
   "top_class_score": 0.3446,
+  "top_two_score_margin": 0.0009,
+  "model_readiness": "research_only",
+  "decision_reason": "No directional edge: holdout performance is below the 0.40 macro-F1 readiness threshold.",
   "selected_model": "random_forest",
   "validation_edge_over_majority_baseline": true,
   "validation_macro_f1": 0.3328,
