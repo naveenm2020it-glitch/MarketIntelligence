@@ -190,7 +190,10 @@ def run(dataset_dir, output_dir, model_path):
     print(json.dumps({"status": report["status"], "live_prediction_enabled": False,
         "selected_model": selected, "rows": report["rows"], "feature_count": len(cols),
         "cv_mean_macro_f1": {k: v["mean_macro_f1"] for k, v in cv_report.items()},
-        "validation": report["validation"], "final_holdout_test": test_metrics}, indent=2))
+        "validation": report["validation"], "final_holdout_test": test_metrics,
+        "agent6_ml_hybrid_validation": hybrid_validation,
+        "agent6_ml_hybrid_final_holdout_test": hybrid_test,
+        "data_quality": report["data_quality"]}, indent=2))
     return report
 
 def main():
