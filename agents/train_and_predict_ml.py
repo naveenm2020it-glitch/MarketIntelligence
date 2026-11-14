@@ -16,7 +16,10 @@ from sklearn.metrics import accuracy_score, f1_score, precision_recall_fscore_su
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
-from agents.build_ml_training_dataset import features_for
+try:
+    from agents.build_ml_training_dataset import features_for
+except ModuleNotFoundError:  # Direct script execution from the agents/ directory.
+    from build_ml_training_dataset import features_for
 
 LABELS = ("bearish", "neutral", "bullish")
 META = {"signal_date", "target_date", "target_expiry", "target_return_pct", "target_class"}
