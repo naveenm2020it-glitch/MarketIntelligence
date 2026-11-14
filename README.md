@@ -4,7 +4,7 @@ Cloud-first NSE market intelligence project. The first milestone is to prove off
 
 ## Current phase: downloader verification
 
-The GitHub Actions workflow runs on weekdays at 17:00 India time and can also be started manually from **Actions → NSE Daily Downloader → Run workflow**.
+The GitHub Actions workflow runs automatically on weekdays at 20:00 India time and can also be started manually from **Actions → NSE Daily Downloader → Run workflow**.
 
 It discovers report links from NSE's official report catalogues, downloads the latest available:
 - CM UDiFF Common Bhavcopy ZIP
@@ -28,10 +28,6 @@ python downloader/nse_downloader.py
 No desktop installation is required for normal operation; use GitHub Actions from the GitHub mobile website/app.
 
 
-## Verification trigger
-A repository update is configured to start the NSE Daily Downloader workflow on the main branch.
-
-
 ## Reliability controls added
 
 - Transient NSE GET failures (HTTP 429/5xx and connection/read failures) are retried up to five times with exponential backoff and Retry-After support.
@@ -52,8 +48,10 @@ The GitHub Releases archive is a durable project archive, but it is still hosted
 
 ## Scheduled archive monitoring
 
-- The NSE downloader runs at 17:00 Asia/Kolkata, Monday-Friday.
-- The archive monitor runs at 17:50 Asia/Kolkata, Monday-Friday. It checks that the scheduled downloader run completed successfully and downloads the current-day GitHub Release ZIP to verify ZIP integrity and the included validation summary.
+- The NSE downloader runs at 20:00 Asia/Kolkata, Monday-Friday, after the usual evening report publication window.
+- After a successful scheduled download, the daily prediction workflow replays Agents 2–7, persists the daily EOD snapshots and audit ledger, and refreshes the leakage-safe ML training dataset from the existing analysis snapshots. It does not train a model.
+- The archive monitor runs at 20:50 Asia/Kolkata, Monday-Friday. It checks that the scheduled downloader run completed successfully and downloads the current-day GitHub Release ZIP to verify ZIP integrity and the included validation summary.
+- The evening pipeline is intended to finish before the user's 21:00 review. If NSE reports are late or incomplete, the fresh analysis/dataset is not treated as ready; the failed or skipped workflow is reported.
 - A manual monitor run can use `archive-only` mode to validate the current-day Release without requiring a scheduled event; `scheduled` mode checks both.
 
 ## Optional independent S3-compatible backup
