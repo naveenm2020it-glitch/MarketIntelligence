@@ -1,0 +1,84 @@
+{
+  "status": "evaluated",
+  "selected_model": "random_forest",
+  "selection_metric": "validation_macro_f1",
+  "validation": {
+    "accuracy": 0.527,
+    "macro_f1": 0.3328,
+    "class_metrics": {
+      "bearish": {
+        "precision": 0.6923,
+        "recall": 0.2432,
+        "f1": 0.36,
+        "support": 37
+      },
+      "neutral": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 4
+      },
+      "bullish": {
+        "precision": 0.4918,
+        "recall": 0.9091,
+        "f1": 0.6383,
+        "support": 33
+      }
+    }
+  },
+  "majority_baseline_validation_macro_f1": 0.2222,
+  "validation_edge_over_majority_baseline": true,
+  "final_holdout_test": {
+    "accuracy": 0.4459,
+    "macro_f1": 0.3136,
+    "class_metrics": {
+      "bearish": {
+        "precision": 0.4545,
+        "recall": 0.4412,
+        "f1": 0.4478,
+        "support": 34
+      },
+      "neutral": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 8
+      },
+      "bullish": {
+        "precision": 0.439,
+        "recall": 0.5625,
+        "f1": 0.4932,
+        "support": 32
+      }
+    }
+  },
+  "rows": {
+    "train": 345,
+    "validation": 74,
+    "test": 74,
+    "production_refit": 493
+  },
+  "features": 68,
+  "date_ranges": {
+    "train": [
+      "2024-11-12",
+      "2026-04-08"
+    ],
+    "validation": [
+      "2026-04-09",
+      "2026-07-27"
+    ],
+    "test": [
+      "2026-07-28",
+      "2026-11-12"
+    ]
+  },
+  "preprocessing": "Median imputation fit inside each training pipeline; StandardScaler used only for logistic regression; no preprocessing fit on validation/test during model selection.",
+  "production_refit": "After one-time holdout evaluation, selected model refit on all currently labelled historical rows for next-session inference.",
+  "limitations": [
+    "Small historical sample; this is an experimental baseline, not a proven trading system.",
+    "Target is next archived session same-expiry NIFTY FUTIDX return, not NIFTY 50 cash-index return.",
+    "Expected next date skips weekends only; NSE holidays must be checked before treating it as a confirmed session.",
+    "Model probabilities are uncalibrated scores, not guaranteed confidence."
+  ]
+}

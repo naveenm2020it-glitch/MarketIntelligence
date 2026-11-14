@@ -1,0 +1,20 @@
+{
+  "status": "experimental_forecast",
+  "signal_date": "2026-11-13",
+  "expected_next_weekday": "2026-11-16",
+  "target_session_note": "Expected weekday only; confirm NSE holiday calendar.",
+  "prediction": "bearish",
+  "class_scores": {
+    "bearish": 0.3446,
+    "neutral": 0.3117,
+    "bullish": 0.3437
+  },
+  "top_class_score": 0.3446,
+  "selected_model": "random_forest",
+  "validation_edge_over_majority_baseline": true,
+  "validation_macro_f1": 0.3328,
+  "final_holdout_test_macro_f1": 0.3136,
+  "training_rows": 493,
+  "feature_count": 68,
+  "interpretation": "Research signal only. Do not use as a standalone trade instruction."
+}
