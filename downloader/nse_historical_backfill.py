@@ -234,19 +234,57 @@ def compact_snapshots(day: str) -> None:
             'data_scope': source.get('data_scope'),
             'trading_date': source.get('trading_date'),
             'comparison_date': source.get('comparison_date'),
+            'universe_symbols': source.get('universe_symbols'),
+            'equity_bhavcopy_matches': source.get('equity_bhavcopy_matches'),
+            'universe_median_delivery_percentage': source.get('universe_median_delivery_percentage'),
+            # Keep only fields consumed by ML features; drop verbose rankings/change histories.
             'stocks': [
-                {key: row.get(key) for key in ('symbol', 'delivery_quantity', 'delivery_percentage')}
+                {key: row.get(key) for key in (
+                    'symbol', 'delivery_quantity', 'delivery_percentage',
+                    'price_change_percentage', 'equity_bhavcopy_match'
+                )}
                 for row in source.get('stocks', [])
             ],
         }
         delivery.write_text(json.dumps(compact, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
 
-    # Agent 6 contains combined option-chain and market-confluence evidence.
-    # Keep its output and compact NIFTY FUTIDX contracts; discard only bulky
-    # option-chain intermediates that are not needed for historical comparisons.
+    # Preserve a small Agent 5 feature summary rather than deleting the entire
+    # options snapshot. Aggregated OI and top support/resistance retain ML signal
+    # while avoiding storage of every strike row in the long-term snapshot.
     option_oi = folder / 'nifty_option_oi_intelligence.json'
     if option_oi.exists():
-        option_oi.unlink()
+        source = json.loads(option_oi.read_text(encoding='utf-8'))
+        compact_expiries = []
+        for expiry in source.get('expiries', []):
+            strikes = expiry.get('strikes', [])
+            total_call = sum(
+                row.get('call_oi', 0) for row in strikes
+                if isinstance(row.get('call_oi'), (int, float))
+            )
+            total_put = sum(
+                row.get('put_oi', 0) for row in strikes
+                if isinstance(row.get('put_oi'), (int, float))
+            )
+            compact_expiries.append({
+                'expiry': expiry.get('expiry'),
+                'strike_count': expiry.get('strike_count', len(strikes)),
+                'total_call_oi': total_call,
+                'total_put_oi': total_put,
+                'put_call_oi_ratio': total_put / total_call if total_call else None,
+                'max_pain': expiry.get('max_pain'),
+                'support_levels': expiry.get('support_levels', [])[:1],
+                'resistance_levels': expiry.get('resistance_levels', [])[:1],
+            })
+        compact = {
+            'schema_version': source.get('schema_version', 1),
+            'agent': source.get('agent'),
+            'status': source.get('status'),
+            'data_scope': source.get('data_scope'),
+            'trading_date': source.get('trading_date'),
+            'valid_expiries': len(compact_expiries),
+            'expiries': compact_expiries,
+        }
+        option_oi.write_text(json.dumps(compact, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
 
 def backfill_exit_code(summary: dict, require_all_dates: bool = False) -> int:
     if not summary.get('passed_days'):

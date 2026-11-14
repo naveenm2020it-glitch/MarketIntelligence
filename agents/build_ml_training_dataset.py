@@ -96,12 +96,21 @@ def features_for(folder: Path, day: str) -> dict:
     expiries = sorted(expiries, key=lambda r: str(r.get("expiry") or "9999"))
     nearest_opt = expiries[0] if expiries else {}
     strikes = nearest_opt.get("strikes", [])
-    call_oi = sum(r.get("call_oi", 0) for r in strikes if finite(r.get("call_oi")))
-    put_oi = sum(r.get("put_oi", 0) for r in strikes if finite(r.get("put_oi")))
+    # New compact snapshots store pre-aggregated OI to avoid retaining every strike.
+    # Older full snapshots remain supported as a fallback.
+    call_oi = nearest_opt.get("total_call_oi")
+    put_oi = nearest_opt.get("total_put_oi")
+    if not finite(call_oi):
+        call_oi = sum(r.get("call_oi", 0) for r in strikes if finite(r.get("call_oi"))) if strikes else None
+    if not finite(put_oi):
+        put_oi = sum(r.get("put_oi", 0) for r in strikes if finite(r.get("put_oi"))) if strikes else None
     add(x, "option_nearest_expiry_strike_count", nearest_opt.get("strike_count"))
     add(x, "option_nearest_expiry_total_call_oi", call_oi if expiries else None)
     add(x, "option_nearest_expiry_total_put_oi", put_oi if expiries else None)
-    add(x, "option_nearest_expiry_put_call_oi_ratio", put_oi / call_oi if call_oi else None)
+    ratio = nearest_opt.get("put_call_oi_ratio")
+    if not finite(ratio):
+        ratio = put_oi / call_oi if finite(call_oi) and call_oi else None
+    add(x, "option_nearest_expiry_put_call_oi_ratio", ratio)
     add(x, "option_nearest_expiry_max_pain", nearest_opt.get("max_pain"))
     support = (nearest_opt.get("support_levels") or [{}])[0]
     resistance = (nearest_opt.get("resistance_levels") or [{}])[0]

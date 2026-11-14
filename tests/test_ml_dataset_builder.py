@@ -28,6 +28,14 @@ class TrainingDatasetBuilderTests(unittest.TestCase):
                      "equity_bhavcopy_match": True},
                 ],
             },
+            "nifty_option_oi_intelligence.json": {
+                "agent": "nifty_option_oi_intelligence", "status": "passed",
+                "trading_date": day, "expiries": [{
+                    "expiry": expiry, "strike_count": 3, "total_call_oi": 1200,
+                    "total_put_oi": 1800, "put_call_oi_ratio": 1.5, "max_pain": 25000,
+                    "support_levels": [{"strike": 24900}], "resistance_levels": [{"strike": 25100}],
+                }],
+            },
             "futures_buildup_intelligence.json": {
                 "agent": "futures_buildup_intelligence", "status": "passed",
                 "trading_date": day, "contracts": [{
@@ -59,6 +67,12 @@ class TrainingDatasetBuilderTests(unittest.TestCase):
             self.assertEqual(row["agent6_direction_bearish"], 1.0)
             self.assertEqual(row["participant_fii_index_futures_net_long"], 100.0)
             self.assertAlmostEqual(row["delivery_positive_price_breadth"], 0.5)
+            self.assertEqual(row["option_nearest_expiry_total_call_oi"], 1200.0)
+            self.assertEqual(row["option_nearest_expiry_total_put_oi"], 1800.0)
+            self.assertEqual(row["option_nearest_expiry_put_call_oi_ratio"], 1.5)
+            self.assertEqual(row["option_nearest_expiry_max_pain"], 25000.0)
+            self.assertEqual(row["option_top_put_support_strike"], 24900.0)
+            self.assertEqual(row["option_top_call_resistance_strike"], 25100.0)
 
     def test_different_expiry_is_not_spliced(self):
         with tempfile.TemporaryDirectory() as tmp:
