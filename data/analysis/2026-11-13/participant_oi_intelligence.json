@@ -70,42 +70,5 @@
       "futures_bias": "net_short",
       "options_bias": "net_long"
     }
-  },
-  "participant_changes_vs_previous_day": {
-    "CLIENT": {
-      "index_futures_net_long": 4631.0,
-      "index_options_directional_net": 38943.0
-    },
-    "DII": {
-      "index_futures_net_long": -867.0,
-      "index_options_directional_net": 2752.0
-    },
-    "FII": {
-      "index_futures_net_long": -6201.0,
-      "index_options_directional_net": -17644.0
-    },
-    "PRO": {
-      "index_futures_net_long": 2437.0,
-      "index_options_directional_net": -24051.0
-    }
-  },
-  "overall_assessment": {
-    "classification": "mixed_participant_positioning",
-    "participant_bias": {
-      "CLIENT": "bullish",
-      "DII": "mixed",
-      "FII": "bearish",
-      "PRO": "mixed"
-    },
-    "method": "Classifies each participant group from its own index-futures and directional index-options net positions; reports consensus only when all available groups agree. Participant totals are not added because counterpart positions offset."
-  },
-  "unrecognized_rows": [
-    "TOTAL"
-  ],
-  "limitations": [
-    "Participant OI is an end-of-day snapshot, not intraday order flow.",
-    "Net positioning is descriptive and is not a standalone trading signal.",
-    "Missing source columns remain unavailable; they are not estimated.",
-    "No prediction accuracy is claimed without separate historical walk-forward validation."
-  ]
+  }
 }

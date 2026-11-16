@@ -14,12 +14,12 @@
   },
   "minimum_samples_required": 30,
   "metrics": {
-    "samples": 492,
-    "accuracy": 0.4268,
-    "balanced_accuracy": 0.3264,
-    "macro_f1": 0.3212,
-    "directional_target_samples": 441,
-    "directional_accuracy": 0.4717,
+    "samples": 493,
+    "accuracy": 0.426,
+    "balanced_accuracy": 0.3257,
+    "macro_f1": 0.3206,
+    "directional_target_samples": 442,
+    "directional_accuracy": 0.4706,
     "confusion_matrix_actual_rows_predicted_columns": {
       "bullish": {
         "bullish": 90,
@@ -27,7 +27,7 @@
         "neutral": 7
       },
       "bearish": {
-        "bullish": 98,
+        "bullish": 99,
         "bearish": 118,
         "neutral": 12
       },
@@ -40,15 +40,15 @@
     "per_class": {
       "bullish": {
         "support": 213,
-        "precision": 0.4265,
+        "precision": 0.4245,
         "recall": 0.4225,
-        "f1": 0.4245
+        "f1": 0.4235
       },
       "bearish": {
-        "support": 228,
+        "support": 229,
         "precision": 0.4538,
-        "recall": 0.5175,
-        "f1": 0.4836
+        "recall": 0.5153,
+        "f1": 0.4826
       },
       "neutral": {
         "support": 51,
@@ -67,8 +67,8 @@
         "accuracy": 0.4532
       },
       "low": {
-        "samples": 151,
-        "accuracy": 0.3642
+        "samples": 152,
+        "accuracy": 0.3618
       }
     }
   },
@@ -207,15 +207,15 @@
       {
         "period": "late",
         "signal_date_start": "2026-03-12",
-        "signal_date_end": "2026-11-11",
-        "samples": 164,
+        "signal_date_end": "2026-11-12",
+        "samples": 165,
         "metrics": {
-          "samples": 164,
-          "accuracy": 0.4146,
-          "balanced_accuracy": 0.3214,
-          "macro_f1": 0.3214,
-          "directional_target_samples": 152,
-          "directional_accuracy": 0.4408,
+          "samples": 165,
+          "accuracy": 0.4121,
+          "balanced_accuracy": 0.3194,
+          "macro_f1": 0.3194,
+          "directional_target_samples": 153,
+          "directional_accuracy": 0.4379,
           "confusion_matrix_actual_rows_predicted_columns": {
             "bullish": {
               "bullish": 31,
@@ -223,7 +223,7 @@
               "neutral": 4
             },
             "bearish": {
-              "bullish": 34,
+              "bullish": 35,
               "bearish": 36,
               "neutral": 7
             },
@@ -236,15 +236,15 @@
           "per_class": {
             "bullish": {
               "support": 75,
-              "precision": 0.4559,
+              "precision": 0.4493,
               "recall": 0.4133,
-              "f1": 0.4336
+              "f1": 0.4306
             },
             "bearish": {
-              "support": 77,
+              "support": 78,
               "precision": 0.4286,
-              "recall": 0.4675,
-              "f1": 0.4472
+              "recall": 0.4615,
+              "f1": 0.4444
             },
             "neutral": {
               "support": 12,
@@ -263,8 +263,8 @@
               "accuracy": 0.3947
             },
             "low": {
-              "samples": 52,
-              "accuracy": 0.4038
+              "samples": 53,
+              "accuracy": 0.3962
             }
           }
         }
@@ -273,14 +273,14 @@
     "persistence_baseline": {
       "method": "predict the next target class using the previous completed pair's actual class",
       "uses_current_target_for_prediction": false,
-      "samples": 491,
+      "samples": 492,
       "metrics": {
-        "samples": 491,
-        "accuracy": 0.4073,
-        "balanced_accuracy": 0.3329,
-        "macro_f1": 0.3329,
-        "directional_target_samples": 440,
-        "directional_accuracy": 0.4409,
+        "samples": 492,
+        "accuracy": 0.4065,
+        "balanced_accuracy": 0.3322,
+        "macro_f1": 0.3322,
+        "directional_target_samples": 441,
+        "directional_accuracy": 0.4399,
         "confusion_matrix_actual_rows_predicted_columns": {
           "bullish": {
             "bullish": 91,
@@ -288,7 +288,7 @@
             "neutral": 19
           },
           "bearish": {
-            "bullish": 98,
+            "bullish": 99,
             "bearish": 103,
             "neutral": 26
           },
@@ -301,15 +301,15 @@
         "per_class": {
           "bullish": {
             "support": 213,
-            "precision": 0.4292,
+            "precision": 0.4272,
             "recall": 0.4272,
-            "f1": 0.4282
+            "f1": 0.4272
           },
           "bearish": {
-            "support": 227,
+            "support": 228,
             "precision": 0.4518,
-            "recall": 0.4537,
-            "f1": 0.4527
+            "recall": 0.4518,
+            "f1": 0.4518
           },
           "neutral": {
             "support": 51,
@@ -321,14 +321,14 @@
         "by_agent6_confidence_grade": {}
       },
       "matched_agent6_comparison": {
-        "samples": 491,
+        "samples": 492,
         "metrics": {
-          "samples": 491,
-          "accuracy": 0.4257,
-          "balanced_accuracy": 0.3257,
-          "macro_f1": 0.3205,
-          "directional_target_samples": 440,
-          "directional_accuracy": 0.4705,
+          "samples": 492,
+          "accuracy": 0.4248,
+          "balanced_accuracy": 0.325,
+          "macro_f1": 0.3199,
+          "directional_target_samples": 441,
+          "directional_accuracy": 0.4694,
           "confusion_matrix_actual_rows_predicted_columns": {
             "bullish": {
               "bullish": 90,
@@ -336,7 +336,7 @@
               "neutral": 7
             },
             "bearish": {
-              "bullish": 98,
+              "bullish": 99,
               "bearish": 117,
               "neutral": 12
             },
@@ -349,15 +349,15 @@
           "per_class": {
             "bullish": {
               "support": 213,
-              "precision": 0.4265,
+              "precision": 0.4245,
               "recall": 0.4225,
-              "f1": 0.4245
+              "f1": 0.4235
             },
             "bearish": {
-              "support": 227,
+              "support": 228,
               "precision": 0.4517,
-              "recall": 0.5154,
-              "f1": 0.4815
+              "recall": 0.5132,
+              "f1": 0.4805
             },
             "neutral": {
               "support": 51,
@@ -373,15 +373,15 @@
       "note": "First pair has no prior observed target and is excluded. Agent 6 comparison metrics above use the exact same rows as this baseline. This is a simple baseline, not a trading strategy."
     },
     "archive_and_contract_audit": {
-      "sample_count": 492,
+      "sample_count": 493,
       "signal_date_start": "2024-11-12",
-      "signal_date_end": "2026-11-11",
+      "signal_date_end": "2026-11-12",
       "target_date_start": "2024-11-13",
-      "target_date_end": "2026-11-12",
+      "target_date_end": "2026-11-13",
       "calendar_gap_days_min": 1,
       "calendar_gap_days_max": 4,
       "calendar_gap_days_counts": {
-        "1": 370,
+        "1": 371,
         "2": 18,
         "3": 92,
         "4": 12
@@ -411,7 +411,7 @@
         "2026-08-25": 20,
         "2026-09-29": 24,
         "2026-10-27": 18,
-        "2026-11-23": 11
+        "2026-11-23": 12
       },
       "unique_common_expiries": 25
     }
@@ -6813,6 +6813,19 @@
       "signal_day_close": 25214.2,
       "target_day_close": 25308.7,
       "target_return_percent": 0.374789
+    },
+    {
+      "signal_date": "2026-11-12",
+      "target_date": "2026-11-13",
+      "calendar_gap_days": 1,
+      "prediction": "bullish",
+      "actual": "bearish",
+      "agent6_confidence": "low",
+      "agent6_confidence_score": 20,
+      "nifty_futidx_expiry": "2026-11-23",
+      "signal_day_close": 25308.7,
+      "target_day_close": 25171.0,
+      "target_return_percent": -0.544082
     }
   ],
   "skipped_pairs": [],
