@@ -133,7 +133,51 @@
       "first_seen_utc": "2026-11-13T18:38:05.120107+00:00",
       "last_seen_utc": "2026-11-14T03:22:43.825272+00:00",
       "seen_count": 2
+    },
+    {
+      "report": "equity_udiff",
+      "trading_date": "16-Nov-2026",
+      "file_key": "CM-UDIFF-BHAVCOPY-CSV",
+      "filename": "BhavCopy_NSE_CM_0_0_0_20261116_F_0000.csv.zip",
+      "bytes": 211439,
+      "sha256": "4b092142ecfdd80eb359a62a9146a598a5fad274ef84930d0d7caf0e9eeaf645",
+      "first_seen_utc": "2026-11-16T23:27:38.949433+00:00",
+      "last_seen_utc": "2026-11-16T23:27:38.949433+00:00",
+      "seen_count": 1
+    },
+    {
+      "report": "fo_udiff",
+      "trading_date": "16-Nov-2026",
+      "file_key": "FO-UDIFF-BHAVCOPY-CSV",
+      "filename": "BhavCopy_NSE_FO_0_0_0_20261116_F_0000.csv.zip",
+      "bytes": 1412691,
+      "sha256": "8d05f146bb8d2d03fb47c5bcba0c8e9ede5cd1e3485fef33843f445a8e6f1d0e",
+      "first_seen_utc": "2026-11-16T23:27:40.288835+00:00",
+      "last_seen_utc": "2026-11-16T23:27:40.288835+00:00",
+      "seen_count": 1
+    },
+    {
+      "report": "participant_oi",
+      "trading_date": "16-Nov-2026",
+      "file_key": "FO-PARTICIPANTWISE-OI",
+      "filename": "fao_participant_oi_16112026.csv",
+      "bytes": 987,
+      "sha256": "a66c78813a82685ec0da2c3c72dd0a7d5274216cb17b372862b46b3aa1cb7ad6",
+      "first_seen_utc": "2026-11-16T23:27:40.439975+00:00",
+      "last_seen_utc": "2026-11-16T23:27:40.439975+00:00",
+      "seen_count": 1
+    },
+    {
+      "report": "security_delivery",
+      "trading_date": "16-Nov-2026",
+      "file_key": "CM-BHAVDATA-FULL",
+      "filename": "sec_bhavdata_full_16112026.csv",
+      "bytes": 407595,
+      "sha256": "984cff285eb2593f07f744179dc24591e7f829cf9d1858a03e7d17229f922d80",
+      "first_seen_utc": "2026-11-16T23:27:41.042077+00:00",
+      "last_seen_utc": "2026-11-16T23:27:41.042077+00:00",
+      "seen_count": 1
     }
   ],
-  "updated_at_utc": "2026-11-14T03:22:43.825272+00:00"
+  "updated_at_utc": "2026-11-16T23:27:41.042077+00:00"
 }
