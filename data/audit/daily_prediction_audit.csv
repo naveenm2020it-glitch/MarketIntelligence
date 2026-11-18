@@ -493,4 +493,5 @@
 2026-11-11,2026-11-12,settled,bullish,bullish,correct,bullish,correct,0.374789,2026-11-23,25214.2,25308.7,1,low,20
 2026-11-12,2026-11-13,settled,bullish,bearish,incorrect,bullish,incorrect,-0.544082,2026-11-23,25308.7,25171.0,1,low,20
 2026-11-13,2026-11-16,settled,bearish,bullish,incorrect,bearish,incorrect,0.487068,2026-11-23,25171.0,25293.6,3,high,70
-2026-11-16,,pending,neutral,,pending,,,,2026-11-23,25293.6,,,low,10
+2026-11-16,2026-11-17,settled,neutral,bullish,incorrect,bullish,correct,0.481149,2026-11-23,25293.6,25415.3,1,low,10
+2026-11-17,,pending,neutral,,pending,,,,2026-11-23,25415.3,,,low,10
