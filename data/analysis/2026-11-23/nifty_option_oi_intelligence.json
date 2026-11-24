@@ -1,0 +1,442 @@
+{
+  "schema_version": 1,
+  "agent": "nifty_option_oi_intelligence",
+  "status": "passed",
+  "data_scope": "NIFTY options EOD OI by expiry and strike",
+  "trading_date": "2026-11-23",
+  "valid_expiries": 18,
+  "expiries": [
+    {
+      "expiry": "2026-11-23",
+      "strike_count": 158,
+      "total_call_oi": 216525595.0,
+      "total_put_oi": 160111640.0,
+      "put_call_oi_ratio": 0.7394582612739155,
+      "max_pain": 25350.0,
+      "support_levels": [
+        {
+          "strike": 25300.0,
+          "put_oi": 13282880.0,
+          "put_change_oi": 3076970.0,
+          "rank": 1
+        }
+      ],
+      "resistance_levels": [
+        {
+          "strike": 25400.0,
+          "call_oi": 18824000.0,
+          "call_change_oi": 16168100.0,
+          "rank": 1
+        }
+      ]
+    },
+    {
+      "expiry": "2026-12-01",
+      "strike_count": 142,
+      "total_call_oi": 96357105.0,
+      "total_put_oi": 67398045.0,
+      "put_call_oi_ratio": 0.6994610828127308,
+      "max_pain": 25500.0,
+      "support_levels": [
+        {
+          "strike": 24000.0,
+          "put_oi": 5120830.0,
+          "put_change_oi": 2929810.0,
+          "rank": 1
+        }
+      ],
+      "resistance_levels": [
+        {
+          "strike": 26000.0,
+          "call_oi": 8418020.0,
+          "call_change_oi": 3625700.0,
+          "rank": 1
+        }
+      ]
+    },
+    {
+      "expiry": "2026-12-08",
+      "strike_count": 118,
+      "total_call_oi": 8141575.0,
+      "total_put_oi": 6456125.0,
+      "put_call_oi_ratio": 0.7929823160752065,
+      "max_pain": 25500.0,
+      "support_levels": [
+        {
+          "strike": 24000.0,
+          "put_oi": 1068535.0,
+          "put_change_oi": 95810.0,
+          "rank": 1
+        }
+      ],
+      "resistance_levels": [
+        {
+          "strike": 25800.0,
+          "call_oi": 756015.0,
+          "call_change_oi": 588380.0,
+          "rank": 1
+        }
+      ]
+    },
+    {
+      "expiry": "2026-12-15",
+      "strike_count": 102,
+      "total_call_oi": 2403115.0,
+      "total_put_oi": 1190410.0,
+      "put_call_oi_ratio": 0.4953612290714344,
+      "max_pain": 25500.0,
+      "support_levels": [
+        {
+          "strike": 25000.0,
+          "put_oi": 172705.0,
+          "put_change_oi": 25025.0,
+          "rank": 1
+        }
+      ],
+      "resistance_levels": [
+        {
+          "strike": 26300.0,
+          "call_oi": 418210.0,
+          "call_change_oi": 374075.0,
+          "rank": 1
+        }
+      ]
+    },
+    {
+      "expiry": "2026-12-22",
+      "strike_count": 95,
+      "total_call_oi": 376610.0,
+      "total_put_oi": 321555.0,
+      "put_call_oi_ratio": 0.8538142906454953,
+      "max_pain": 25500.0,
+      "support_levels": [
+        {
+          "strike": 25000.0,
+          "put_oi": 37050.0,
+          "put_change_oi": 14820.0,
+          "rank": 1
+        }
+      ],
+      "resistance_levels": [
+        {
+          "strike": 27000.0,
+          "call_oi": 72020.0,
+          "call_change_oi": 28210.0,
+          "rank": 1
+        }
+      ]
+    },
+    {
+      "expiry": "2026-12-29",
+      "strike_count": 177,
+      "total_call_oi": 58508135.0,
+      "total_put_oi": 69319150.0,
+      "put_call_oi_ratio": 1.1847779800193596,
+      "max_pain": 25500.0,
+      "support_levels": [
+        {
+          "strike": 25500.0,
+          "put_oi": 6631625.0,
+          "put_change_oi": 723645.0,
+          "rank": 1
+        }
+      ],
+      "resistance_levels": [
+        {
+          "strike": 27000.0,
+          "call_oi": 6797815.0,
+          "call_change_oi": 193075.0,
+          "rank": 1
+        }
+      ]
+    },
+    {
+      "expiry": "2027-01-25",
+      "strike_count": 140,
+      "total_call_oi": 5481970.0,
+      "total_put_oi": 7594470.0,
+      "put_call_oi_ratio": 1.3853541701249734,
+      "max_pain": 25500.0,
+      "support_levels": [
+        {
+          "strike": 25500.0,
+          "put_oi": 1002430.0,
+          "put_change_oi": 15145.0,
+          "rank": 1
+        }
+      ],
+      "resistance_levels": [
+        {
+          "strike": 27000.0,
+          "call_oi": 853190.0,
+          "call_change_oi": 93990.0,
+          "rank": 1
+        }
+      ]
+    },
+    {
+      "expiry": "2027-03-30",
+      "strike_count": 13,
+      "total_call_oi": 5297955.0,
+      "total_put_oi": 8013135.0,
+      "put_call_oi_ratio": 1.5124958592513527,
+      "max_pain": 25500.0,
+      "support_levels": [
+        {
+          "strike": 24000.0,
+          "put_oi": 1788215.0,
+          "put_change_oi": 40690.0,
+          "rank": 1
+        }
+      ],
+      "resistance_levels": [
+        {
+          "strike": 27000.0,
+          "call_oi": 1500395.0,
+          "call_change_oi": -67600.0,
+          "rank": 1
+        }
+      ]
+    },
+    {
+      "expiry": "2027-06-29",
+      "strike_count": 14,
+      "total_call_oi": 1908040.0,
+      "total_put_oi": 2373420.0,
+      "put_call_oi_ratio": 1.243904739942559,
+      "max_pain": 25500.0,
+      "support_levels": [
+        {
+          "strike": 21000.0,
+          "put_oi": 463265.0,
+          "put_change_oi": 3380.0,
+          "rank": 1
+        }
+      ],
+      "resistance_levels": [
+        {
+          "strike": 27000.0,
+          "call_oi": 488605.0,
+          "call_change_oi": -17420.0,
+          "rank": 1
+        }
+      ]
+    },
+    {
+      "expiry": "2027-09-28",
+      "strike_count": 13,
+      "total_call_oi": 2210.0,
+      "total_put_oi": 1040.0,
+      "put_call_oi_ratio": 0.47058823529411764,
+      "max_pain": 22500.0,
+      "support_levels": [
+        {
+          "strike": 21000.0,
+          "put_oi": 390.0,
+          "put_change_oi": 0.0,
+          "rank": 1
+        }
+      ],
+      "resistance_levels": [
+        {
+          "strike": 30000.0,
+          "call_oi": 1365.0,
+          "call_change_oi": 65.0,
+          "rank": 1
+        }
+      ]
+    },
+    {
+      "expiry": "2027-12-28",
+      "strike_count": 20,
+      "total_call_oi": 1444440.0,
+      "total_put_oi": 2460020.0,
+      "put_call_oi_ratio": 1.7030960095261831,
+      "max_pain": 26000.0,
+      "support_levels": [
+        {
+          "strike": 25000.0,
+          "put_oi": 461815.0,
+          "put_change_oi": -585.0,
+          "rank": 1
+        }
+      ],
+      "resistance_levels": [
+        {
+          "strike": 27000.0,
+          "call_oi": 275550.0,
+          "call_change_oi": 4810.0,
+          "rank": 1
+        }
+      ]
+    },
+    {
+      "expiry": "2028-06-27",
+      "strike_count": 14,
+      "total_call_oi": 65.0,
+      "total_put_oi": 7995.0,
+      "put_call_oi_ratio": 123.0,
+      "max_pain": null,
+      "support_levels": [
+        {
+          "strike": 22000.0,
+          "put_oi": 7085.0,
+          "put_change_oi": 130.0,
+          "rank": 1
+        }
+      ],
+      "resistance_levels": [
+        {
+          "strike": 27000.0,
+          "call_oi": 65.0,
+          "call_change_oi": 0.0,
+          "rank": 1
+        }
+      ]
+    },
+    {
+      "expiry": "2028-12-26",
+      "strike_count": 19,
+      "total_call_oi": 68170.0,
+      "total_put_oi": 77330.0,
+      "put_call_oi_ratio": 1.134369957459293,
+      "max_pain": 27000.0,
+      "support_levels": [
+        {
+          "strike": 27000.0,
+          "put_oi": 19665.0,
+          "put_change_oi": 0.0,
+          "rank": 1
+        }
+      ],
+      "resistance_levels": [
+        {
+          "strike": 30000.0,
+          "call_oi": 35335.0,
+          "call_change_oi": 0.0,
+          "rank": 1
+        }
+      ]
+    },
+    {
+      "expiry": "2029-06-26",
+      "strike_count": 14,
+      "total_call_oi": 130.0,
+      "total_put_oi": 530.0,
+      "put_call_oi_ratio": 4.076923076923077,
+      "max_pain": null,
+      "support_levels": [
+        {
+          "strike": 26000.0,
+          "put_oi": 310.0,
+          "put_change_oi": 65.0,
+          "rank": 1
+        }
+      ],
+      "resistance_levels": [
+        {
+          "strike": 27000.0,
+          "call_oi": 130.0,
+          "call_change_oi": 0.0,
+          "rank": 1
+        }
+      ]
+    },
+    {
+      "expiry": "2029-12-24",
+      "strike_count": 16,
+      "total_call_oi": 20235.0,
+      "total_put_oi": 20660.0,
+      "put_call_oi_ratio": 1.021003212255992,
+      "max_pain": 30000.0,
+      "support_levels": [
+        {
+          "strike": 30000.0,
+          "put_oi": 6305.0,
+          "put_change_oi": -130.0,
+          "rank": 1
+        }
+      ],
+      "resistance_levels": [
+        {
+          "strike": 30000.0,
+          "call_oi": 18675.0,
+          "call_change_oi": -715.0,
+          "rank": 1
+        }
+      ]
+    },
+    {
+      "expiry": "2030-06-25",
+      "strike_count": 13,
+      "total_call_oi": 0.0,
+      "total_put_oi": 325.0,
+      "put_call_oi_ratio": null,
+      "max_pain": null,
+      "support_levels": [
+        {
+          "strike": 21000.0,
+          "put_oi": 325.0,
+          "put_change_oi": 0.0,
+          "rank": 1
+        }
+      ],
+      "resistance_levels": [
+        {
+          "strike": 15000.0,
+          "call_oi": 0.0,
+          "call_change_oi": 0.0,
+          "rank": 1
+        }
+      ]
+    },
+    {
+      "expiry": "2030-12-31",
+      "strike_count": 13,
+      "total_call_oi": 390.0,
+      "total_put_oi": 1820.0,
+      "put_call_oi_ratio": 4.666666666666667,
+      "max_pain": 30000.0,
+      "support_levels": [
+        {
+          "strike": 21000.0,
+          "put_oi": 845.0,
+          "put_change_oi": 0.0,
+          "rank": 1
+        }
+      ],
+      "resistance_levels": [
+        {
+          "strike": 30000.0,
+          "call_oi": 390.0,
+          "call_change_oi": 65.0,
+          "rank": 1
+        }
+      ]
+    },
+    {
+      "expiry": "2031-06-24",
+      "strike_count": 13,
+      "total_call_oi": 0.0,
+      "total_put_oi": 65.0,
+      "put_call_oi_ratio": null,
+      "max_pain": null,
+      "support_levels": [
+        {
+          "strike": 24000.0,
+          "put_oi": 65.0,
+          "put_change_oi": 0.0,
+          "rank": 1
+        }
+      ],
+      "resistance_levels": [
+        {
+          "strike": 15000.0,
+          "call_oi": 0.0,
+          "call_change_oi": 0.0,
+          "rank": 1
+        }
+      ]
+    }
+  ]
+}

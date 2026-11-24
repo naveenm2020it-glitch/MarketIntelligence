@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "agent": "participant_oi_intelligence",
+  "status": "passed",
+  "data_scope": "EOD participant positioning only",
+  "trading_date": "2026-11-20",
+  "comparison_date": "2026-11-19",
+  "participants": {
+    "CLIENT": {
+      "future_index_long": 155681.0,
+      "future_index_short": 114419.0,
+      "future_stock_long": 3127092.0,
+      "future_stock_short": 371549.0,
+      "option_index_call_long": 3072591.0,
+      "option_index_put_long": 4103061.0,
+      "option_index_call_short": 3106912.0,
+      "option_index_put_short": 4591567.0,
+      "total_long_contracts": 13589474.0,
+      "total_short_contracts": 10578356.0,
+      "index_futures_net_long": 41262.0,
+      "index_options_directional_net": 454185.0,
+      "futures_bias": "net_long",
+      "options_bias": "net_long"
+    },
+    "DII": {
+      "future_index_long": 52405.0,
+      "future_index_short": 35254.0,
+      "future_stock_long": 460150.0,
+      "future_stock_short": 4352471.0,
+      "option_index_call_long": 6837.0,
+      "option_index_put_long": 99777.0,
+      "option_index_call_short": 2290.0,
+      "option_index_put_short": 1700.0,
+      "total_long_contracts": 668451.0,
+      "total_short_contracts": 4904416.0,
+      "index_futures_net_long": 17151.0,
+      "index_options_directional_net": -93530.0,
+      "futures_bias": "net_long",
+      "options_bias": "net_short"
+    },
+    "FII": {
+      "future_index_long": 75864.0,
+      "future_index_short": 146318.0,
+      "future_stock_long": 3673303.0,
+      "future_stock_short": 2671683.0,
+      "option_index_call_long": 882959.0,
+      "option_index_put_long": 1425970.0,
+      "option_index_call_short": 992566.0,
+      "option_index_put_short": 1041238.0,
+      "total_long_contracts": 6804437.0,
+      "total_short_contracts": 5636651.0,
+      "index_futures_net_long": -70454.0,
+      "index_options_directional_net": -494339.0,
+      "futures_bias": "net_short",
+      "options_bias": "net_short"
+    },
+    "PRO": {
+      "future_index_long": 53026.0,
+      "future_index_short": 40985.0,
+      "future_stock_long": 742436.0,
+      "future_stock_short": 607278.0,
+      "option_index_call_long": 1179262.0,
+      "option_index_put_long": 1515473.0,
+      "option_index_call_short": 1039881.0,
+      "option_index_put_short": 1509777.0,
+      "total_long_contracts": 6184287.0,
+      "total_short_contracts": 6127227.0,
+      "index_futures_net_long": 12041.0,
+      "index_options_directional_net": 133685.0,
+      "futures_bias": "net_long",
+      "options_bias": "net_long"
+    }
+  },
+  "participant_changes_vs_previous_day": {
+    "CLIENT": {
+      "index_futures_net_long": -9762.0,
+      "index_options_directional_net": 155266.0
+    },
+    "DII": {
+      "index_futures_net_long": -5615.0,
+      "index_options_directional_net": 6135.0
+    },
+    "FII": {
+      "index_futures_net_long": -2207.0,
+      "index_options_directional_net": -62022.0
+    },
+    "PRO": {
+      "index_futures_net_long": 17584.0,
+      "index_options_directional_net": -99378.0
+    }
+  },
+  "overall_assessment": {
+    "classification": "mixed_participant_positioning",
+    "participant_bias": {
+      "CLIENT": "bullish",
+      "DII": "mixed",
+      "FII": "bearish",
+      "PRO": "bullish"
+    },
+    "method": "Classifies each participant group from its own index-futures and directional index-options net positions; reports consensus only when all available groups agree. Participant totals are not added because counterpart positions offset."
+  },
+  "unrecognized_rows": [
+    "TOTAL"
+  ],
+  "limitations": [
+    "Participant OI is an end-of-day snapshot, not intraday order flow.",
+    "Net positioning is descriptive and is not a standalone trading signal.",
+    "Missing source columns remain unavailable; they are not estimated.",
+    "No prediction accuracy is claimed without separate historical walk-forward validation."
+  ]
+}
