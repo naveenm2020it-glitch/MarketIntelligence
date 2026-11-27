@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "agent": "futures_buildup_intelligence",
+  "status": "passed",
+  "data_scope": "EOD FUTIDX/FUTSTK futures buildup only",
+  "trading_date": "2026-11-26",
+  "contracts": [
+    {
+      "symbol": "NIFTY",
+      "instrument_type": "FUTIDX",
+      "source_instrument_code": "IDF",
+      "expiry": "2027-01-25",
+      "close_price": 26188.5,
+      "previous_close": 26103.7,
+      "previous_close_source": "current_report",
+      "price_change": 84.79999999999927,
+      "price_change_percentage": 0.32485816186977046,
+      "open_interest": 960310.0,
+      "open_interest_change": 26780.0,
+      "classification": "long_buildup"
+    },
+    {
+      "symbol": "NIFTY",
+      "instrument_type": "FUTIDX",
+      "source_instrument_code": "IDF",
+      "expiry": "2026-12-29",
+      "close_price": 26029.4,
+      "previous_close": 25937.0,
+      "previous_close_source": "current_report",
+      "price_change": 92.40000000000146,
+      "price_change_percentage": 0.35624783128350024,
+      "open_interest": 12500280.0,
+      "open_interest_change": 489970.0,
+      "classification": "long_buildup"
+    },
+    {
+      "symbol": "NIFTY",
+      "instrument_type": "FUTIDX",
+      "source_instrument_code": "IDF",
+      "expiry": "2027-02-23",
+      "close_price": 26357.1,
+      "previous_close": 26264.3,
+      "previous_close_source": "current_report",
+      "price_change": 92.79999999999927,
+      "price_change_percentage": 0.35333132807651174,
+      "open_interest": 87880.0,
+      "open_interest_change": 17810.0,
+      "classification": "long_buildup"
+    }
+  ],
+  "underlyings": [
+    {
+      "symbol": "NIFTY",
+      "instrument_type": "FUTIDX",
+      "contracts_included": 3,
+      "median_contract_price_change_percentage": 0.35333132807651174,
+      "aggregate_open_interest_change": 534560.0,
+      "classification": "long_buildup"
+    }
+  ],
+  "classification_counts": {
+    "long_buildup": 265,
+    "long_unwinding": 43,
+    "neutral_or_flat": 45,
+    "short_buildup": 251,
+    "short_covering": 65
+  },
+  "source_rows": 34574,
+  "valid_future_contracts": 669,
+  "invalid_future_rows": 0,
+  "ignored_instrument_types": {
+    "IDO": 6383,
+    "STO": 27522
+  },
+  "source_instrument_mapping": {
+    "IDF": "FUTIDX",
+    "STF": "FUTSTK",
+    "FUTIDX": "FUTIDX",
+    "FUTSTK": "FUTSTK"
+  },
+  "method": "Contract classification uses close minus previous close and reported change in open interest. Underlying aggregation sums OI changes across included expiries and uses the median contract price-change percentage.",
+  "limitations": [
+    "This is an end-of-day futures snapshot, not intraday order flow or a live signal.",
+    "FUTIDX and FUTSTK are included; options and other instrument types are excluded.",
+    "Underlying aggregation can combine multiple expiries; inspect contract-level rows for expiry detail.",
+    "A buildup label is descriptive and is not a standalone trade recommendation.",
+    "No prediction accuracy is claimed without historical walk-forward validation."
+  ]
+}
