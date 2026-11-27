@@ -485,7 +485,51 @@
       "first_seen_utc": "2026-11-26T23:08:44.223542+00:00",
       "last_seen_utc": "2026-11-26T23:08:44.223542+00:00",
       "seen_count": 1
+    },
+    {
+      "report": "equity_udiff",
+      "trading_date": "27-Nov-2026",
+      "file_key": "CM-UDIFF-BHAVCOPY-CSV",
+      "filename": "BhavCopy_NSE_CM_0_0_0_20261127_F_0000.csv.zip",
+      "bytes": 209250,
+      "sha256": "bcccf336c474fc1ba098a210dc13eba11a2d20f2b5cbc99ec1720ca4dddf7124",
+      "first_seen_utc": "2026-11-27T22:48:44.142439+00:00",
+      "last_seen_utc": "2026-11-27T22:48:44.142439+00:00",
+      "seen_count": 1
+    },
+    {
+      "report": "fo_udiff",
+      "trading_date": "27-Nov-2026",
+      "file_key": "FO-UDIFF-BHAVCOPY-CSV",
+      "filename": "BhavCopy_NSE_FO_0_0_0_20261127_F_0000.csv.zip",
+      "bytes": 1118968,
+      "sha256": "eecb17f5ff8de20b606e7691133759ca10e4c320fb7e67afa417416e062012b2",
+      "first_seen_utc": "2026-11-27T22:48:45.259303+00:00",
+      "last_seen_utc": "2026-11-27T22:48:45.259303+00:00",
+      "seen_count": 1
+    },
+    {
+      "report": "participant_oi",
+      "trading_date": "27-Nov-2026",
+      "file_key": "FO-PARTICIPANTWISE-OI",
+      "filename": "fao_participant_oi_27112026.csv",
+      "bytes": 975,
+      "sha256": "52208ecc338fddf7471c8aef5b3e773fc4ceac01ad7dbc8e2594df18b8d01bea",
+      "first_seen_utc": "2026-11-27T22:48:45.723081+00:00",
+      "last_seen_utc": "2026-11-27T22:48:45.723081+00:00",
+      "seen_count": 1
+    },
+    {
+      "report": "security_delivery",
+      "trading_date": "27-Nov-2026",
+      "file_key": "CM-BHAVDATA-FULL",
+      "filename": "sec_bhavdata_full_27112026.csv",
+      "bytes": 403571,
+      "sha256": "784a7ca66cac4c398f8d9f4795f80321de98a5e954c7430e22c53c9ead024497",
+      "first_seen_utc": "2026-11-27T22:48:46.143242+00:00",
+      "last_seen_utc": "2026-11-27T22:48:46.143242+00:00",
+      "seen_count": 1
     }
   ],
-  "updated_at_utc": "2026-11-26T23:08:44.223542+00:00"
+  "updated_at_utc": "2026-11-27T22:48:46.143242+00:00"
 }
